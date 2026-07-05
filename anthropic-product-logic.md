@@ -2,65 +2,24 @@
 
 ## 1. 先看历史：Claude Code 是长出来的，不是规划出来的
 
-Anthropic 现在的产品逻辑看起来 clean —— 统一 harness、行业 plugin、按需加载 skill —— 但要真的理解它为什么 work，得先回到 2024 年看看这套体系是怎么发生的。
+要理解 Anthropic 现在这套"统一 harness、行业 plugin、按需加载 skill"的产品逻辑为什么 work，得先回到起点。
 
-Anthropic 2021 年 1 月由 7 个 OpenAI 出来的人创办，由 Dario 和 Daniela Amodei 领头。2023 年 3 月 14 日发布第一个公开产品 —— Anthropic API + Claude 和 Claude Instant。注意是 API，不是 chatbot。从这一天到 2024 年底，**Anthropic 商业模式高度集中：70-75% 收入来自 pay-per-token 的 API 调用**，剩下来自 Claude Pro / Team / Enterprise 订阅。
+Anthropic 2021 年由 7 位前 OpenAI 员工创办，2023 年 3 月发布的第一个产品是 API，不是 chatbot。和 OpenAI 主攻消费级 chatbot 不同，Anthropic 从一开始押的是企业 API 合同和开发者生态，本质是一家 API 公司。
 
-跟 OpenAI 完全相反 —— OpenAI 走的是消费级 chatbot（ChatGPT），9 亿周活；Anthropic 不去争消费入口，从 2023 年起一直押企业 API 合同 + 开发者 adoption。**他们是一家 API 公司**。这一点至关重要 —— Claude Code 不是从 day-1 战略蓝图里规划出来的。
+2024 年 9 月，Boris Cherny（前 Meta principal engineer）以 founding engineer 身份加入，最初只是在探索 API 的可能性，并没有"做编程产品"的明确任务。几个月后，他的 manager、Anthropic 联合创始人 Ben Mann 给了他一句话："Don't build for today's model. Build for the model in six months." 这句话后来成了 Claude Code 起源故事里被反复引用的 north star。
 
-2024 年 9 月，Boris Cherny 加入 Anthropic 做 founding engineer。他之前在 Meta 干了 5 年 principal engineer，做过 Instagram 代码库现代化。Anthropic 没有给他"去做编程产品"的 mandate，他只是新员工在探索 API。
+时间线上的几个关键节点：
 
-转折点是几个月后他的 manager Ben Mann（Anthropic co-founder 之一）给的一句 north star。这句话后来在所有讲 Claude Code 起源的访谈里被反复引用：
+- 2024-09：Boris 拿 Claude 3.5 做出 CLI 工具原型，能用但他自己只用它写 10% 的代码。
+- 2024-10：Claude 3.6 发布，能力小幅提升，工具仍勉强可用。
+- 2025-02：Claude Code 以 research preview 形式首次公开。
+- 2025-05：Claude Opus 4 发布，同一套 harness 突然变得真正可用，先在 Anthropic 内部自然传开，同月 Claude Code GA。
+- 2025-11：Claude Opus 4.5 发布，能力再次跃升，这次裂变扩散到外部开发者社区，15K 开发者调查中 46% 将其评为"most loved"。
+- 2026 初：Claude Code 单产品年化收入达 $2.5B，周活 2M+。
 
-> **"Don't build for today's model. Build for the model in six months."**
+这条时间线的关键在于：harness 的设计始终没有大改，真正带来质变的是底层模型两次跃升。如果 Boris 当初按 Claude 3.5 的能力上限去设计 harness、塞入大量兜底的工程复杂度，Opus 4 发布时就得推倒重来，也就赶不上那波内部自发传播。
 
-这段历史最关键的不是 Boris 写了多少行代码，是**模型版本的发布节点跟 Claude Code 能力曲线的直接绑定**。这件事值得单独画一张时间轴出来看：
-
-```
-2024-09  ┃ Boris 入职。底层模型 = Claude 3.5。
-         ┃ Boris 拿 Claude 3.5 prototype CLI 工具。
-         ┃ 能用，但 Boris 自己只用它写 10% 代码。
-         ┃
-2024-10  ┃ Claude 3.6 ship。能力小幅提升，prototype 仍勉强可用。
-         ┃
-         ┃    ──── 前 6 个月："barely usable" 阶段 ────
-         ┃
-2025-02  ┃ Claude Code 以 research preview 形态首次公开。
-         ┃
-2025-05  ┃ ★ Claude Opus 4 ship。
-         ┃ 同一个 harness、同一个 prototype，突然真的可用。
-         ┃ Boris 把它 share 进 Anthropic 内部。
-         ┃ 内部工程师立刻 organic 上手 —— 没有 OKR、没有 launch event。
-         ┃ ★ Claude Code 同月 GA。
-         ┃
-2025-11  ┃ ★ Claude Opus 4.5 ship。
-         ┃ 第二次能力跃升。这次裂变出 Anthropic 外。
-         ┃ Pragmatic Engineer 15K 开发者 survey: Claude Code 46% "most loved"。
-         ┃ Boris 自己从这个月开始完全不再用手写代码。
-         ┃
-2026-初   ┃ Claude Code 单产品 $2.5B 年化收入。
-         ┃ 2M+ 周活。4% 公开 GitHub commits。
-```
-
-这张图里**模型版本的发布是因果链的发动机**：
-
-- **Opus 4 之前**：harness 设计可能已经差不多就位了，但产品没有飞。Boris 自己用 10%。这一阶段如果 Anthropic 发力做 marketing，效果约等于 0 —— 模型不够强，用户用一次就走。
-- **Opus 4 ship 那一刻**：同样的 harness 没改，但底层模型够强了。产品瞬间从 "barely usable" 变成 "我宁愿用它写代码"。**裂变第一波发生在 Anthropic 内部**，3 个月里 80%+ 工程师开始每天用。
-- **Opus 4.5 ship 那一刻**：能力再次跃升，裂变扩散到外部技术社区。Pragmatic Engineer 2026 年 2 月那次 15K 开发者 survey 的 "most loved" 46% 是这个时间点之后的事。
-
-**这条因果链反过来印证 Ben Mann 那句 "为 6 个月后的模型做" 是对的**。Boris 在模型还做不到的时候提前把 harness 准备好，模型升一代他不用改 harness 就直接吃到全部 capability boost。如果他当初按 Claude 3.5 的能力上限设计 harness（比如塞一堆 multi-agent 编排、prompt 工程兜底），Opus 4 ship 那一刻他就要全部重写 —— 而重写期间 Anthropic 内部根本来不及 viral。
-
-**Claude Code 这个产品的成功本质上是模型能力曲线和 harness 设计的耦合输出**。把它说成 "Anthropic 押对了模型会变强" 在结果上没错，但把这事讲成 "Anthropic 当年规划好了" 是事后归因。真正发生的事是：底层模型在 2025 年 5 月和 2025 年 11 月两次跃升，正好撞上一个为强模型准备好的 harness。**两件事独立发生，又恰好对上**。
-
-完全没有 Anthropic 启动消费 chatbot 那种 hype。Claude Code 是 dogfood 出来的 + 模型升级带飞出来的 + 自然传播出来的。到 2026 年初，单 Claude Code 这个产品的年化收入做到 $2.5B。
-
-我把这段历史摆在前面，是因为今天 Anthropic 官方叙事里 "all products bet on model getting stronger" 这条 thesis，**不是 2021 年 day-1 拍出来的蓝图**。它是事后证实的判断 —— Boris 的实验 + Ben Mann 的 north star + Opus 4 的能力突破，三件事叠在一起 retrospectively 验证了它。
-
-这个区分重要。**如果你以为 Anthropic 从 day-1 就知道 harness 应该薄、应该做行业 plugin —— 你会以为这是 visionary 团队的 strategic foresight**。实际更接近 "在 API-first 路线上，一个新员工因为一句对的话，做了一个跟模型协同进化的 prototype，碰到模型真的变强了，飞起来了"。
-
-天时（Opus 4 ship 让 harness 上的 workaround 都不再需要）、地利（Anthropic 本来就是 API 公司，给了 Boris 探索的 surface）、人和（Boris + Ben Mann 各自做对了一件事）—— **三个条件缺一个都跑不出来今天这个产品矩阵**。
-
-理解了这一点，回头看现在的 thesis 才能落地：**Anthropic 的产品逻辑不是"我们押对了"，是"我们押的事 happen to be 对，而且我们识别得早，把整个公司的下一步规划压到这条路上"**。这两个表述工程含义完全不同 —— 前者是天才战略家的故事，后者是 founding engineer 实验 + 高 conviction 快速 follow-through 的故事。第二个版本更接近现实，也更可复制。
+所以 Claude Code 的成功更准确的描述是：模型能力曲线和 harness 设计的耦合，而非一开始就规划好的战略蓝图。今天 Anthropic 官方叙事里"押注模型会变强"这条 thesis，是 Boris 的实验、Ben Mann 的一句话、Opus 4 的能力突破三者叠加之后事后验证的结果，而不是 2021 年就画好的蓝图。
 
 ## 2. 现在的根命题：模型会持续变强，所以底座要薄
 
