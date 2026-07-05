@@ -1,0 +1,13 @@
+title: Maisie · Writing
+description: Essays on agent harness — 拆解 Anthropic 产品逻辑 / harness 流行的底层条件
+lang: zh-CN
+theme: minima
+markdown: kramdown
+
+header_pages:
+  - anthropic-product-logic.md
+  - why-harness-2025.md
+
+minima:
+  social_links:
+    - { platform: github, user_url: "https://github.com/maisieyang" }
