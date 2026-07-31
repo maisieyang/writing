@@ -9,3 +9,4 @@
 |---|---|
 | [拆解 Anthropic 的产品逻辑](./anthropic-product-logic.md) | Claude Code 是长出来的不是规划出来的——Model + Harness + Plugin 分层系统的完整因果链 |
 | [Claude Code 不是凭空出现的](./why-harness-2025.md) | agent harness 流行的底层条件：模型能力曲线如何把 prompt → context → harness → loop 一层层推过阈值 |
+| [瓶颈在哪，交互重心就在哪](./coding-tools-evolution.md) | coding 工具四代变迁（chat → Cursor → Claude Code → Codex app）的一手记录：模型每上一个台阶，稀缺判断换一个位置，界面围绕它重组 |
