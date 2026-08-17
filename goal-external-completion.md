@@ -3,7 +3,7 @@
 *Goal、Permission 与 Sandbox 如何共同支撑 Coding Agent 的长程任务*
 
 > 写于 2026-08-04，重写于 2026-08-07  
-> 这是我在 [build-my-own-harness](https://github.com/maisieyang/build-my-own-harness)
+> 这是我在 [OpenHarness](https://github.com/maisieyang/open-harness)
 > 中实现并 dogfood `/goal`，随后重构 Permission 与 Sandbox runtime 的工程复盘。
 
 

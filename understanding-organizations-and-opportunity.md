@@ -5,7 +5,7 @@
 > 写于 2026-08-13
 >
 > 这不是一篇组织管理教程，而是我在成熟组织中工作，又独立构建并持续 dogfood
-> [OpenHarness](https://github.com/maisieyang/build-my-own-harness) 之后，对工作、机会和职业成长
+> [OpenHarness](https://github.com/maisieyang/open-harness) 之后，对工作、机会和职业成长
 > 重新形成的一套理解。
 
 

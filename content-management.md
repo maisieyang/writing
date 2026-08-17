@@ -3,7 +3,7 @@
 > 写于 2026-08-13
 >
 > 这是我从 0 到 1 构建
-> [build-my-own-harness](https://github.com/maisieyang/build-my-own-harness)，再连续
+> [OpenHarness](https://github.com/maisieyang/open-harness)，再连续
 > dogfood Plan、Default、Goal、Tool、Compact、Memory、Resume、Skills、Plugins 与
 > Subagent 后，对 Content Management 形成的一套工程认知。
 

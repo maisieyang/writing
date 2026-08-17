@@ -1,7 +1,7 @@
 # Claude Code 不是凭空出现的：agent harness 流行的底层条件
 
 > 写于 2026-04-27
-> 这是我在 [build-my-own-harness](https://github.com/maisieyang/build-my-own-harness) 项目期间的思考记录。
+> 这是我在 [OpenHarness](https://github.com/maisieyang/open-harness) 项目期间的思考记录。
 
 
 ## 引子

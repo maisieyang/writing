@@ -30,6 +30,6 @@
 
 ## 相关项目
 
-[build-my-own-harness](https://github.com/maisieyang/build-my-own-harness) ·
+[OpenHarness](https://github.com/maisieyang/open-harness) ·
 [finance-skills](https://github.com/maisieyang/finance-skills) ·
 [my-skills](https://github.com/maisieyang/my-skills)

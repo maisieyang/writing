@@ -1,7 +1,7 @@
 # Agent Harness 的 Eval：不是给模型打分，而是建立受控实验能力
 
 > 写于 2026-08-04
-> 这是我在 [build-my-own-harness](https://github.com/maisieyang/build-my-own-harness)
+> 这是我在 [OpenHarness](https://github.com/maisieyang/open-harness)
 > 中，从 5 个 prompt case、LLM judge 和 cassette，一路做到 8 组 capability eval
 > 与 SWE-bench Lite 全量战役后的工程复盘。
 
@@ -376,14 +376,14 @@ Eval 提供的是有限差分能力：冻结模型、dataset、oracle 和实验�
 
 ## 项目证据
 
-- [Eval first-principles](https://github.com/maisieyang/build-my-own-harness/blob/main/docs/ideas/eval-first-principles.md)
-- [D31：Eval substrate](https://github.com/maisieyang/build-my-own-harness/blob/main/decisions/31-eval-substrate-boundary.md)
-- [D35：Eval coverage map](https://github.com/maisieyang/build-my-own-harness/blob/main/decisions/35-eval-coverage-map.md)
-- [D41：Eval 系统化与金字塔](https://github.com/maisieyang/build-my-own-harness/blob/main/decisions/41-eval-systematization.md)
-- [D45：Secondary-pass evals](https://github.com/maisieyang/build-my-own-harness/blob/main/decisions/45-secondary-pass-evals.md)
-- [Tool choice dataset card](https://github.com/maisieyang/build-my-own-harness/blob/main/evals/tool_choice/dataset_card.md)
-- [Skill trigger dataset card](https://github.com/maisieyang/build-my-own-harness/blob/main/evals/skill_trigger/dataset_card.md)
-- [Error feedback dataset card](https://github.com/maisieyang/build-my-own-harness/blob/main/evals/error_feedback/dataset_card.md)
-- [SWE-bench adapter boundary](https://github.com/maisieyang/build-my-own-harness/blob/main/decisions/40-swebench-adapter-boundary.md)
-- [SWE-bench RUNLOG](https://github.com/maisieyang/build-my-own-harness/blob/main/benchmarks/swebench/RUNLOG.md)
-- [SWE-bench failure taxonomy](https://github.com/maisieyang/build-my-own-harness/blob/main/benchmarks/swebench/TAXONOMY.md)
+- [Eval first-principles](https://github.com/maisieyang/open-harness/blob/main/docs/ideas/eval-first-principles.md)
+- [D31：Eval substrate](https://github.com/maisieyang/open-harness/blob/main/decisions/31-eval-substrate-boundary.md)
+- [D35：Eval coverage map](https://github.com/maisieyang/open-harness/blob/main/decisions/35-eval-coverage-map.md)
+- [D41：Eval 系统化与金字塔](https://github.com/maisieyang/open-harness/blob/main/decisions/41-eval-systematization.md)
+- [D45：Secondary-pass evals](https://github.com/maisieyang/open-harness/blob/main/decisions/45-secondary-pass-evals.md)
+- [Tool choice dataset card](https://github.com/maisieyang/open-harness/blob/main/evals/tool_choice/dataset_card.md)
+- [Skill trigger dataset card](https://github.com/maisieyang/open-harness/blob/main/evals/skill_trigger/dataset_card.md)
+- [Error feedback dataset card](https://github.com/maisieyang/open-harness/blob/main/evals/error_feedback/dataset_card.md)
+- [SWE-bench adapter boundary](https://github.com/maisieyang/open-harness/blob/main/decisions/40-swebench-adapter-boundary.md)
+- [SWE-bench RUNLOG](https://github.com/maisieyang/open-harness/blob/main/benchmarks/swebench/RUNLOG.md)
+- [SWE-bench failure taxonomy](https://github.com/maisieyang/open-harness/blob/main/benchmarks/swebench/TAXONOMY.md)

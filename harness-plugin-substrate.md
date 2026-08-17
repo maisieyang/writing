@@ -1,7 +1,7 @@
 # 扩展 Coding Agent，不要扩展 Engine：我实现 Harness Plugin 的过程
 
 > 写于 2026-08-04
-> 这是我在 [build-my-own-harness](https://github.com/maisieyang/build-my-own-harness)
+> 这是我在 [OpenHarness](https://github.com/maisieyang/open-harness)
 > 中实现 Skills、Commands、MCP、ModeBundle 与 Plugin，并用
 > [finance-skills](https://github.com/maisieyang/finance-skills) 做兼容性 dogfood
 > 之后的工程复盘。
@@ -104,7 +104,7 @@ PluginManifest
                               existing agent engine
 ```
 
-[`PluginLoader.fan_out`](https://github.com/maisieyang/build-my-own-harness/blob/main/src/openharness/plugins/loader.py)
+[`PluginLoader.fan_out`](https://github.com/maisieyang/open-harness/blob/main/src/openharness/plugins/loader.py)
 只做 component parse、namespace 和 catalog merge。CLI 用 `LayeredStore` 把 plugin catalog
 叠在原有 store 上，consumer 继续调用同一个 `get()` / `discover()` 接口。
 
@@ -147,7 +147,7 @@ credit-report-reviewer/
 4. 下游 fan-out 不接收 `source_format`，也不按来源分支；
 5. format 只保留在 introspection 和 observability 中。
 
-[`parse_cc_plugin`](https://github.com/maisieyang/build-my-own-harness/blob/main/src/openharness/plugins/model.py)
+[`parse_cc_plugin`](https://github.com/maisieyang/open-harness/blob/main/src/openharness/plugins/model.py)
 把 CC 的 `author.name` 投影到 flat author，扫描 `skills/*/SKILL.md`，不支持的字段映射为
 空值。`oh plugins list` 可以显示 `FORMAT=cc|oh`，但 SkillStore 和 engine 永远看不到
 这个字段。
