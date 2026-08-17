@@ -1,6 +1,6 @@
 # 我实现了 `/goal`，但人还是不能离开
 
-*Goal、Permission 与 Sandbox 如何共同支撑 Coding Agent 的长程任务*
+*Goal 能让任务持续推进，却不足以让人离场：Permission、Sandbox 如何共同补齐长程任务的控制边界。*
 
 
 ## 为什么我要实现 `/goal`
