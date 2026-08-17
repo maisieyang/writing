@@ -13,5 +13,3 @@ Goal 能让任务持续推进，却不足以让人离场：Permission、Sandbox 
 ### [Content Management：如何为 Coding Agent 管理有限注意力](./content-management.md)
 LLM 的输入不是记忆，而是每次推理的 Working Set：Harness 如何选择、限流、压缩和重建 Context，让信息保持
 充分、可信、当前且适配行动。
-
-
