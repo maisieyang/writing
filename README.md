@@ -1,43 +1,27 @@
+# 文章
+
+## Harness 工程
+
+### [我实现了 `/goal`，但人还是不能离开](./goal-external-completion.md)
+Goal 能让任务持续推进，却不足以让人离场：Permission、Sandbox 如何共同补齐长程任务的控制
+边界。
+
+### [Content Management：如何为 Coding Agent 管理有限注意力](./content-management.md)
+LLM 的输入不是记忆，而是每次推理的 Working Set：Harness 如何选择、限流、压缩和重建 Context，让信息保持
+充分、可信、当前且适配行动。
+
 ## 产品与演化
 
 ### [拆解 Anthropic 的产品逻辑](./anthropic-product-logic.md)
 
-Claude Code 是长出来的，不是规划出来的——Model + Harness + Plugin 分层系统的完整因果链。
+从 Claude Code 的演化、统一 Harness 到行业 Plugin：Anthropic 如何把持续变强的模型接入高价值工作流，并争
+夺企业知识工作的智能入口。
 
-### [Claude Code 不是凭空出现的](./why-harness-2025.md)
+### [瓶颈在哪，交互重心就在哪：Coding 工具的四代变迁](./coding-tools-evolution.md)
+从 ChatGPT、Cursor、Claude Code 到 Codex App：模型能力每跨过一个阈值，人的注意力瓶颈如何迁移，工具界面
+又为何随之重组。
 
-Agent harness 流行的底层条件：模型能力曲线如何把 prompt → context → harness → loop 一层层推过阈值。
-
-### [瓶颈在哪，交互重心就在哪](./coding-tools-evolution.md)
-
-Terminal-first 释放 Agent 的行动能力；task-first 管理人的注意力：从同步 turn-taking 到 task control plane。
-
-## Harness 工程复盘
-
-### [扩展 Coding Agent，不要扩展 Engine](./harness-plugin-substrate.md)
-
-Plugin 不是第二套 runtime：外部能力如何被发现、翻译、命名并编译到既有 Skills、MCP、Hooks 与 QueryContext 契约中。
-
-### [我实现了 `/goal`，但人还是不能离开](./goal-external-completion.md)
-
-Goal 接管长程任务的推进与停止之后，Permission、Sandbox 与 park/resume 如何让人的注意力真正离开执行循环。
-
-### [Content Management：如何为 Coding Agent 管理有限注意力](./content-management.md)
-
-LLM 的输入不是记忆；Harness 通过选择、塑形、限流、压缩、外置和重建，为下一次推理编译可信且适配行动的 Working Set。
-
-### [Agent Harness 的 Eval](./eval-engineering.md)
-
-Eval 不是给模型打分，而是用能力声明、最硬 oracle、稳定性画像和 benchmark 为不可求导系统建立受控实验能力。
-
-## 工作、组织与机会
-
-### [理解组织之后，我开始重新理解机会](./understanding-organizations-and-opportunity.md)
-
-从完成 Task、害怕反馈，到理解所有权、因果半径，以及组织为什么设置一个职位所决定的真实契约与机会边界。
 
 ## 相关项目
 
 [OpenHarness](https://github.com/maisieyang/open-harness) ·
-[finance-skills](https://github.com/maisieyang/finance-skills) ·
-[my-skills](https://github.com/maisieyang/my-skills)
