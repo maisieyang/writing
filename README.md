@@ -1,6 +1,3 @@
-这些文章来自我从 0 到 1 构建并持续 dogfood OpenHarness 的过程。它们不是功能文档，而是对
-产品演化、系统边界和真实工程反馈的拆解。
-
 ## 产品与演化
 
 ### [拆解 Anthropic 的产品逻辑](./anthropic-product-logic.md)
