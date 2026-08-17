@@ -1,0 +1,20 @@
+---
+---
+
+@import "minima";
+
+// Keep the article navigation readable instead of flowing all titles together.
+.site-nav .page-link {
+  display: block;
+  margin-left: 0;
+  margin-right: 0 !important;
+  padding: 4px 10px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+@media screen and (max-width: 600px) {
+  .site-nav .page-link {
+    white-space: normal;
+  }
+}
