@@ -17,12 +17,15 @@
 这些问题分别对应信息的选择、限流、压缩、外置、恢复与隔离。它们共同决定每一次推理的
 Working Set：模型此刻能看到什么、看不到什么，以及可以在什么能力边界内采取行动。
 
-理解这套系统需要两个视角。第一部分从设计展开：从第一性原理拆分问题，为不同信息选择载体、
-生命周期和边界。每个选择都是一个架构假设，也意味着放弃其他方案并接受相应代价。
+我对这套系统的认知经历了两个阶段。
 
-第二部分回到 dogfood。当 Plan、Goal、Tool、Compact、Memory、Resume、Plugin 和 Subagent
-进入同一条真实链路，许多单个模块无法暴露的接缝开始出现。真实反馈没有替代最初的设计，而是
-检验这些架构假设，并让原本抽象的判断变得更具体、更严格。
+第一阶段，是从 0 到 1 设计系统。我从第一性原理拆分问题，为不同信息选择载体、生命周期和
+边界。这个阶段已经形成了 Content Management 的整体架构；每个选择都是一个假设，也意味着
+我主动放弃了其他方案，并接受相应的代价。
+
+第二阶段，是让系统真正跑起来。当 Plan、Goal、Tool、Compact、Memory、Resume、Plugin 和
+Subagent 进入同一条 dogfood 链路，许多单个模块无法暴露的接缝开始出现。Dogfood 让我看见，
+第一阶段的每个架构选择，只有穿过完整的 Agent 生命周期，才会暴露真正需要守住的边界。
 
 整个过程可以概括为：
 
@@ -322,127 +325,15 @@ Prompt Too Long 表示 Provider 明确拒绝了当前请求，原样重试没有
 只重新编译一次上下文：保留预算内最大的、协议完整的 recent 后缀，把更早历史交给 Summary，
 然后重建请求。第二次仍然过长就明确报错，不再继续删除 Conversation。
 
-#### Summary 的物理机制
+#### Summary 要为下一次推理留下什么
 
-确定性清理仍不足时，`full_compact()` 负责划定语义损失边界、调用模型和重组消息：
+Conversation 是一条按时间增长的事件流，Summary 却不应该成为它的缩写版。它真正要回答的
+只有一个问题：
 
-```text
-清理后的 Conversation
-        │
-        ├── cleaned older ──→ 专用 Summary request ──→ LLM Summary
-        │                                                ↓
-        └── 原始最近 N 条消息 recent ────────────────────┐
-                                                        │
-下一次 Conversation = boundary + Summary + original recent N
-```
+> 当较早历史退出输入后，下一次推理还必须知道什么，才能继续工作，而不重复已经完成的事情、
+> 不误判当前状态，也不操作错对象？
 
-这里仍然没有另一套确定性的“状态编译器”。代码能保证的是：清理不会越过 recent Tool 与
-recent Message 的并行保护边界；只把 cleaned older 交给 Summary 模型；禁用这次调用的
-Tools；从返回值提取 Summary；再把原始 recent tail 拼回 Conversation。显式执行
-`/compact` 时使用同一机制，只把 Message recent tail 缩小到最后 2 条消息。
-
-#### Summary Prompt 回答三个问题
-
-Conversation 天然是一条按时间排列的事件流：用户提出要求，模型采取行动，Tool 返回结果，
-失败发生，方案被修正，新的事实覆盖旧判断。事件流适合还原“发生过什么”，却不适合无限作为
-下一次推理的输入。
-
-下一次判断通常不需要重新经历全部过程。它真正需要的是：目标与约束是什么，哪些事实已经
-验证，当前状态是什么，什么仍未解决，以及接下来可以做什么。因此，Summary Prompt 的设计
-本质上是在回答三个问题。
-
-**它让模型扮演什么角色？**
-
-不是聊天记录员，也不是为人生成会议纪要，而是为另一个即将接手工作的 LLM 创建任务交接
-状态。它的目标不是复述得完整，而是让后续模型不必重复已经完成的工作，就能继续行动。
-
-**它要求模型保留什么？**
-
-只保留继续工作所需的最小充分信息。当前 Prompt 把这些信息收敛为六类：
-
-```text
-1. Current Objective
-   当前目标、验收标准和仍然有效的用户约束。
-
-2. Current State
-   当前进展；以最新证据为准，明确哪些旧状态已经失效。
-
-3. Verified Evidence
-   已验证结果、测试结果、重要错误及其解决状态。
-
-4. Decisions and Constraints
-   已作出的关键决策、仍会影响后续工作的被拒方案及必要原因。
-
-5. Active Artifacts
-   相关文件、路径、精确命令、ID 和其他继续工作需要的标识。
-
-6. Remaining Work
-   未解决问题、阻塞项和明确的下一步。
-```
-
-这六类信息不是按原始对话顺序归档，而是在回答“接手者现在需要知道什么”。重复尝试和填充
-内容可以删除；已经被新证据推翻的旧状态只能在仍有解释价值时保留；命令、路径、ID、错误
-token 等身份信息必须逐字保留。Prompt 还要求区分事实、用户指令和模型推断，并在来源会影响
-责任归属、解释或下一步行动时保留 provenance。
-
-**它要求模型用什么结构输出？**
-
-模型必须在 `<summary>` 标签内，严格按上面的顺序输出六个 section，不输出分析、问候或结语。
-系统还会在旧 Conversation 末尾追加一条专用 User Message，明确要求模型现在生成 Handoff，
-而不是继续模仿此前的对话；这次请求同时禁用全部 Tools。
-
-所以，我们希望 LLM Summary 完成的不是“把每句话缩短”，而是一次表示转换：
-
-```text
-较早的 Conversation 事件流
-          │
-          │  选择、合并、排序、淘汰
-          ▼
-六段任务交接状态 ──────┐
-                        ├── 下一次推理的 Working Set
-原始 recent tail ───────┘
-```
-
-从事件流变成任务状态，必然是有损的。但“有损”不等于可以随意改写。这里最重要的是形成唯一的
-当前状态：假设前十轮都认为实现有 bug，最后一轮测试已经证明 bug 被修复，Summary 就不应该
-再把“曾经发现 bug”和“后来测试通过”记录成两个平级事实。后续模型需要知道当前状态是已修复，
-旧错误只在解释仍然有效的决策时才值得保留。
-
-同样，语义可以压缩，身份不能压缩。路径、命令、Tool 或 Skill 的来源、错误顺序和 opaque
-identifier 一旦被改写，后续行动操作的就可能是另一个对象。对于这些信息，“意思相近”不等于
-“事实相同”。
-
-这些要求不是 Python 状态机。当前系统的保证分成三个层次：
-
-| 层次 | 当前实现 |
-|---|---|
-| 代码硬机制 | 并行计算 Message/Tool recent、清理旧 ToolResult、重新估算、切分 older/recent、禁用 Tools、提取返回文本并重组消息 |
-| Prompt 软契约 | 定义接手者角色、六类最小充分信息、固定输出结构和保真规则 |
-| 质量验证 | `memory_compact` Eval 检查已定义决策面上的事实保留与噪声排除 |
-
-Compact 之后，被 Summary 替换的旧消息不再直接进入下一次模型输入。Summary 会成为后续模型
-理解那段历史的主要代理，却不会因此成为审计真值。如果业务需要完整追溯，原始记录必须由
-独立审计机制保存，不能要求 Summary 同时承担无损归档与上下文压缩两个互相冲突的职责。
-
-#### 当前实现的边界
-
-源码仍然暴露了三个需要明确面对的边界：
-
-1. Summary 看不到已经变为 `[cleared]` 的旧 ToolResult 正文。关键事实最好已经进入后续
-   Assistant 结论；保留的 ToolUse 参数只是行动索引，对于查询类 Tool 可以重取当前状态，
-   但不能保证重建精确历史输出。
-2. 程序会优先提取 `<summary>` 标签里的内容，但如果模型没有返回标签，仍会接受非空原文。
-   当前没有运行时 schema validator 检查六个 section 是否齐全，也无法逐项验证语义保真。
-3. 当前状态、来源、错误解决状态和未完成工作仍由模型解释。Prompt 可以定义契约，却不能把
-   这些语义判断变成确定性的代码保证。
-
-`memory_compact` Eval 的意义正是在这条软边界上种植关键事实，验证最新状态、Skill provenance
-与错误顺序是否存活。但有限 case 通过只说明当前模型在这些决策面上达到契约，不等于任意长
-Conversation 都能被可靠压缩。
-
-这个选择的核心取舍是：不追求完整复述过去，而是在可接受的损失下维持决策连续性；同时清楚
-区分哪些损失由确定性代码造成，哪些语义由模型决定，哪些效果只经过有限 Eval 验证。
-
+这个问题通常落到三类信息：当前目标与约束，已经验证的当前状态，以及仍未完成的工作。
 
 ### 5. 把长期知识与精确恢复放在 Prompt 之外
 
@@ -494,11 +385,42 @@ Subagent 也不机械继承父 Agent 的完整 Conversation。子任务通常只
 到这里，设计阶段的完整地图已经形成：选择、塑形、限流、压缩、外置和隔离共同管理一次推理
 真正可见的信息。
 
+```mermaid
+flowchart LR
+    subgraph F["OpenHarness 的具体功能"]
+        direction TB
+        F1["System Prompt · Project Instructions<br/>Tool / Skill Catalog · Memory Index"]
+        F2["Default · Plan · Goal<br/>Tool Registry · Permission Runtime"]
+        F3["PostToolUse Budget<br/>Head / Tail + Truncation Marker"]
+        F4["Recent Message / Tool 边界<br/>[cleared] · Summary"]
+        F5["Project Memory · Snapshot<br/>/clear · --resume"]
+        F6["Subagent 独立 Working Set<br/>父级只接收 Agent ToolResult"]
+    end
 
-## 第二部分：系统跑起来以后，Dogfood 看见了什么
+    subgraph D["Content Management 决策"]
+        direction TB
+        D1["选择<br/>什么应该进入"]
+        D2["塑形<br/>暴露哪些能力"]
+        D3["限流<br/>Tool Result 如何进入"]
+        D4["压缩<br/>较早历史如何退出"]
+        D5["外置与恢复<br/>什么离开，如何回来"]
+        D6["隔离<br/>跨 Agent 继承什么"]
+    end
 
-设计阶段给出的仍然是架构假设。单元测试可以证明每个函数满足自己的 contract，却不能保证
-信息走完整条链路后，模型看到的仍然是设计者以为它会看到的东西。
+    F1 --> D1 --> W["下一次推理的 Working Set<br/>可见信息 + 能力边界"]
+    F2 --> D2 --> W
+    F3 --> D3 --> W
+    F4 --> D4 --> W
+    F5 --> D5 --> W
+    F6 --> D6 --> W
+    W --> L["LLM 判断与行动"]
+```
+
+
+## 第二部分：系统跑起来以后，我在 Dogfood 中看见了什么
+
+设计阶段给出的仍然是我的架构假设。单元测试可以证明每个函数满足自己的 contract，却不能
+保证信息走完整条链路后，模型看到的仍然是我以为它会看到的东西。
 
 Dogfood 的价值，就在于让这些假设进入真实生命周期。它既会发现缺陷，也会证明某些设计确实
 成立。这里记录的不只是手动会话里直接看见的现象，也包括沿着这些现象继续检查源码、重构系统
@@ -507,150 +429,131 @@ Dogfood 的价值，就在于让这些假设进入真实生命周期。它既会
 
 ### 1. 信息存在，不等于模型看见
 
-**设计时的判断**：Tool Result 必须受到预算约束，否则一条测试日志或文件内容就可能占满
-Context。
+**我最初的选择**：给每个 Tool Result 设置预算。我的出发点很直接：一条测试日志或文件内容
+不能占满整个 Context。
 
-**跑起来后的反馈**：一次完整 pytest 已经在终端产生结果，但末尾统计没有进入模型看到的
+**Dogfood 让我看见**：一次完整 pytest 已经在终端产生结果，但末尾统计没有进入模型看到的
 Tool Result。模型看不到真实数字，却在回复中给出了推测结果。这个错误数字随后进入
 Conversation，下一轮反而成了更容易引用的“证据”。
 
-**因此形成的认识**：信息没有从机器上消失，不代表它参与了这一次推理。限流不是单纯控制
+**这改变了我的判断**：信息没有从机器上消失，不代表它参与了这一次推理。限流不是单纯控制
 长度，而是在设计证据以什么方式损失。模型生成的错误陈述一旦进入 Conversation，还可能比
 被截掉的真实证据拥有更强的后续影响力。
 
-当前 Tool Result 会保留 head、tail 与明确的截断 marker。模型必须区分“当前结果中不可见”
-和“原始数据中不存在”；关键事实位于中段时，应该使用 Grep 或定向 Read 找回。
+```mermaid
+flowchart TB
+    R["完整 Tool Result<br/>事实存在于机器输出"]
+
+    subgraph BAD["损失不可见"]
+        B1["静默截断<br/>关键事实没有进入模型输入"]
+        B2["模型根据残缺信息猜测"]
+        B3["错误陈述进入 Conversation"]
+        B4["下一轮把错误陈述再次当作证据"]
+        B1 --> B2 --> B3 --> B4
+    end
+
+    subgraph GOOD["损失可见，而且可以找回"]
+        G1["Head + Tail + 明确 Marker"]
+        G2{"关键事实当前是否可见？"}
+        G3["基于真实证据回答"]
+        G4["明确：当前结果中不可见"]
+        G5["Grep / 定向 Read 找回"]
+        G1 --> G2
+        G2 -- "是" --> G3
+        G2 -- "否" --> G4 --> G5 --> G3
+    end
+
+    R --> B1
+    R --> G1
+```
+
+**我最后怎么改**：Tool Result 保留 head、tail 与明确的截断 marker；Prompt 要求模型区分
+“当前结果中不可见”和“原始数据中不存在”。关键事实位于中段时，再用 Grep 或定向 Read
+找回。限流不再假装没有损失，而是把损失本身变成模型可见的事实。
 
 
 ### 2. Conversation 没有超限，不等于请求放得下
 
-**设计时的判断**：Conversation 是增长最快的部分，因此可以用它的 Token 数决定何时 Compact。
+**我最初的选择**：用 Conversation 的 Token 数决定何时 Compact。它是增长最快的部分，也最
+容易被测量。
 
-**后续重构暴露的反馈**：Provider 接收的并不只有 Conversation。System Prompt、Project
+**继续向下追以后，我看见**：Provider 接收的并不只有 Conversation。System Prompt、Project
 Instructions、Tool 与 MCP schemas、输出 Token 预留，以及 Hook 动态加入的内容，都共享同一个
 Context Window。只计算 Conversation，会让本地判断“还能放下”的请求被 Provider 直接拒绝。
 
-**因此形成的认识**：容量属于完整请求，不属于某一种消息来源。随着 MCP 和 Plugin 增加，能力
-描述本身也会成为主要 Context 成本。
+**这改变了我的判断**：容量属于完整请求，不属于某一种消息来源。随着 MCP 和 Plugin 增加，
+能力描述本身也会成为主要 Context 成本。
 
-当前系统先编译包含 System Prompt、Tool schemas 与 Conversation 的请求草稿，扣除输出预留后
-决定是否清理或 Summary。PreApiCall Hook 随后仍可能改变实际请求；如果 Provider 返回 Prompt
-Too Long，恢复逻辑会根据这份被拒请求的实际开销只做一次语义重编译，并重新应用明确选择了
-rebuild 的动态 Hook。第二次仍失败就报告预算诊断并显式结束，不在重试循环里盲删
-Conversation。
-
-
-### 3. 进程内已经 Clear，不等于系统已经遗忘
-
-**设计时的判断**：Snapshot 负责恢复当前 Session，`/clear` 负责清空 Conversation。
-
-**跑起来后的反馈**：REPL 内存中的 Conversation 已经清空，但 `/clear` 没有立即把这个状态
-写回磁盘 Snapshot。退出进程后再次 Resume，旧消息重新出现。从当前进程看 Clear 成功了，从
-支持恢复的系统看，这次遗忘从未完整提交。
-
-复测中还出现过另一个现象：fixture 的 Snapshot 已经是 0 messages，但从仓库根目录 Resume
-仍然恢复了另一段历史。原因不是 Clear 再次失败，而是 Snapshot 按 cwd 隔离；不同目录本来就
-对应不同的持久状态。
-
-**因此形成的认识**：只要系统支持恢复，“已经遗忘”本身就是一种需要持久化的状态。项目身份
-也属于恢复契约，不能脱离 cwd 判断 Resume 是否正确。
-
-当前 `/clear` 会清空进程内 Conversation、active Goal 和 conversation-bound parked
-Permission state，并原子替换当前项目的磁盘 Snapshot。它不删除 Project Memory，也不重置
-已经存在的权限 ledger。随后退出再 Resume，只能恢复已经清空的 Session 状态。
+**我最后怎么改**：系统先编译包含 System Prompt、Tool schemas 与 Conversation 的请求草稿，
+扣除输出预留后决定是否清理或 Summary。PreApiCall Hook 随后仍可能改变实际请求；如果
+Provider 返回 Prompt Too Long，恢复逻辑会根据这份被拒请求的实际开销只做一次语义重编译，
+并重新应用明确选择了 rebuild 的动态 Hook。第二次仍失败就报告预算诊断并显式结束，不在重试
+循环里盲删 Conversation。
 
 
-### 4. 事实还在，不等于 Handoff 仍然正确
+### 3. 事实还在，不等于 Handoff 仍然正确
 
-**设计时的判断**：LLM 可以把较早 Conversation 总结成结构化文本，再与原始 recent tail
-一起交给后续模型。
+**我最初的理解**：Summary 就是给 LLM 一段 Prompt，让它把较早 Conversation 压缩成结构化
+文本，再与原始 recent tail 一起交给后续模型。
 
-**跑起来后的反馈**：Summary 有时保留了 Skill 内容，却改变了它的来源——用户显式选择的
+**Dogfood 让我看见**：Summary 有时保留了 Skill 内容，却改变了它的来源——用户显式选择的
 Slash Skill 被描述成模型主动调用了 `LoadSkill`；较早错误会被写成最新错误，已经解决的任务
 会重新变成当前待办；总结请求本身也曾被误认为用户任务。文字仍然通顺，关键词也还存在，但
 provenance、时间顺序和当前状态已经改变。
 
-**因此形成的认识**：Summary 的目标不是“保留尽可能多的句子”，而是为下一位模型生成可靠的
-任务交接。来源、顺序、最新状态和未完成工作不是附属元数据，而是后续决策直接依赖的事实。
-Prompt 的结构也会塑造输出；要求模型复述所有消息，反而会与“只保留继续工作所需状态”冲突。
+**我的第一次修正**，是给 Summary Prompt 加入更严格的结构和更多保真规则：明确 provenance、
+错误顺序、最新状态、路径、命令和 ID，再用 Eval 检查这些事实是否存活。这解决了一部分真实
+缺陷，但也让我逐渐看见另一个问题：Prompt 越来越像一份 Conversation 归档模板，而不是交给
+下一位模型的工作状态。要求复述更多栏目，不一定带来更好的延续，反而会让旧历史和 Summary
+请求本身继续竞争“当前工作”的位置。
 
-当前 Compact Prompt 已收敛为六段 Handoff：Current Objective、Current State、Verified
-Evidence、Decisions and Constraints、Active Artifacts、Remaining Work。专用 User Message
-明确要求生成交接状态而不是续写对话，Summary 调用禁用 Tools；确定性代码只清理保护范围外
-的旧 ToolResult，不改写用户消息、Assistant 结论和 recent tail。
+**这再次改变了我的判断**：Summary 的目标不是“保留尽可能多的句子”，而是为下一位模型生成
+可靠的任务交接。来源、顺序、最新状态和未完成工作不是附属元数据，而是后续决策直接依赖的
+事实；Prompt 的结构本身也会决定模型把什么当作重要信息。
+
+**我最后怎么改**：Compact Prompt 收敛为六段 Handoff：Current Objective、Current State、
+Verified Evidence、Decisions and Constraints、Active Artifacts、Remaining Work。专用 User
+Message 明确要求生成交接状态而不是续写对话，Summary 调用禁用 Tools；确定性代码只清理
+保护范围外的旧 ToolResult，不改写用户消息、Assistant 结论和 recent tail。
 
 这些语义决策面由 `memory_compact` Eval 验证。由于基础 Prompt 已改变，旧 cassette 不再能
 证明当前行为；10 个 cases 必须重新完成 live、record 与 replay，才能建立新的可信基线。
 即使全部通过，也只证明已定义决策面，而不是任意 Conversation 都能被可靠压缩。
 
-### 5. 能力加载成功，不等于能力容易发现
+### 4. Conversation 不是 Session 的全部状态
 
-**设计时的判断**：Skills 和 Plugins 使用 Catalog + 按需展开，避免完整正文常驻 Context。
+**我最初的实现**：Snapshot 主要恢复 Conversation；`/clear` 清空内存中的消息。权限请求暂停
+后，用户的批准或拒绝则被包装成一条 synthetic 用户消息，再交给模型决定如何继续。
 
-**跑起来后的反馈**：Plugin 正确加载了 namespaced Skills，机制上没有问题；但 `/skills`
-展示多行 description 后，列表迅速被说明文字淹没。能力确实存在，用户却很难快速浏览和选择。
+**Dogfood 让我看见**：`/clear` 后退出再 Resume，磁盘 Snapshot 会让旧消息重新出现；审批链路
+中的 synthetic 消息也不是真正的 continuation。它既伪造了用户没有说过的内容，也丢失了一次
+多 Tool 调用具体停在哪里、哪些结果已经完成等控制状态。
 
-**因此形成的认识**：Catalog 不是正文的缩略展示，而是一种独立的信息产品。它既占用模型
-Context，也占用人的注意力；这两个消费者还需要不同的呈现方式。
+**这改变了我的判断**：Session 不只有 Conversation。Active Goal、parked Permission、Tool
+batch 的中断位置，以及“这段历史已经被 Clear”本身，都是需要保存和恢复的状态；但这些状态
+不应该为了让模型看见而被伪装成对话消息。
 
-当前 `/skills` 人类菜单会把 description 压成一行并按可用宽度截断，完整 Skill body 仍然按需
-加载。模型看到的 Skill catalog 目前仍使用完整 description，因此 Skill 作者仍需把它写成
-短小、可区分的路由说明，把适用边界和工作流程放进正文。人类菜单变清楚，并不自动意味着
-模型侧的常驻 Context 已经最优。
-
-
-### 6. Permission request 不是普通 Tool error
-
-**设计时的判断**：超出当前权限边界的 Tool 调用需要暂停，等待用户批准或拒绝。
-
-**跑起来后的反馈**：如果把审批决定伪装成新的用户消息，或者把未执行调用写成普通错误
-ToolResult，Conversation 就会混入并未真实发生的历史。对于一次包含多个 ToolUse 的回复，
-系统还必须记住具体停在哪一个调用、前面哪些结果已经完成，以及批准后应该从哪里继续。
-
-**因此形成的认识**：权限审批属于 Harness 控制面，不属于模型对话内容。它需要暂停 Agent
-Loop，却不能改写已经发生的 Conversation，也不能让 Goal Judge 或 Plan menu 把一次被中断的
-工作误判为自然结束。
-
-当前系统把 exact request、Tool batch 位置、已完成结果和 controller 状态保存为独立 parked
-continuation。`/approve` 或 `/deny` 会直接接回原 Agent Loop；Conversation 中不再插入伪造的
-`[permission decision]` 用户消息。Goal Judge 和 Plan menu 会等 continuation 真正完成后再
-运行；Snapshot 可以恢复这项控制面状态，而 `/clear` 会将它一并清除。
-
-
-### 7. 隔离不能只靠设计意图证明
-
-**设计时的判断**：Plan 通过能力面塑形实现只读；Subagent 不继承完整父 Conversation。
-
-**跑起来后的反馈**：Plan 的真实 Tool catalog 中只存在 Read、Grep、WebSearch、WebFetch 与
-LoadSkill，写入、执行和委派工具确实消失。Subagent 完成读取任务后，父 Snapshot 只增加一次
-Agent ToolUse 与一个最终 ToolResult，子 Agent 内部的 Read 和消息没有展开进父 Conversation。
-
-**因此形成的认识**：Dogfood 不只用于发现错误，也用于验证边界是否真的存在。模型声称“我
-保持只读”不是证据；父 Agent 正确复述子任务结果，也不能证明 Context 没有泄漏。需要检查
-实际 Tool catalog 与 typed Conversation 结构。
-
-能力限制由可观察的 Tool surface 与运行时 policy 共同证明；Agent 隔离由父子 Conversation
-的结构证据证明，而不是由最终答案自述。
+**我最后怎么改**：Snapshot 保存 typed Conversation 与可恢复控制状态；`/clear` 同时清空内存
+状态并原子替换磁盘 Snapshot。Permission 使用独立 parked continuation 保存 exact request、
+已完成结果和 controller 状态，`/approve` 或 `/deny` 直接接回原 Agent Loop，不再向
+Conversation 插入 synthetic 用户消息。
 
 
 ## 第三部分：把反馈重新编译成工程认知
 
-Dogfood 没有推翻全部设计。许多第一性原理选择被证明是正确方向，真实使用则进一步说明这些
-方向必须精确到什么程度。
+Dogfood 没有推翻我的全部设计。许多第一性原理选择被证明是正确方向，真实使用则进一步告诉
+我，这些方向必须精确到什么程度。
 
 | 设计阶段已经形成的判断 | Dogfood 后加深的认识 |
 |---|---|
-| Context 是 Working Set | Working Set 还必须标明信息损失与未知边界 |
+| Tool Result 必须限流 | 限流还必须让模型知道证据在哪里发生了损失 |
 | Conversation 需要容量预算 | 真正共享 Context Window 的是完整 Provider 请求 |
-| Tool Result 必须限流 | 限流是在设计证据损失方式，而不只是控制长度 |
 | Summary Prompt 必须保留关键事实 | Summary 是任务 Handoff；来源、顺序与当前状态需要独立 Eval |
-| Snapshot 负责 Resume | 遗忘也必须原子持久化，cwd 也是恢复身份的一部分 |
-| Skills 应渐进加载 | 人类菜单与模型 Catalog 是两个不同的信息产品 |
-| Permission 需要人工决策 | 审批是可恢复的控制面 continuation，不是对话消息 |
-| Subagent 需要独立 Context | 隔离必须通过父子 Conversation 的结构证据验证 |
+| Snapshot 负责 Resume | Session 还包含 Goal、Permission continuation 等非对话状态 |
 
-这张变化表揭示了两轮认知的关系：设计负责提出可组合的系统假设，dogfood 负责让这些假设面对
-完整生命周期。反馈最终不应该只停留在一次修复里，还需要进入可重复执行的验证体系。
+这张变化表揭示了我的两轮认知如何接在一起：设计负责提出可组合的系统假设，dogfood 负责让
+这些假设面对完整生命周期。反馈最终不应该只停留在一次修复里，还需要进入可重复执行的验证
+体系。
 
 
 ### TDD 守确定性不变量
@@ -692,9 +595,8 @@ Dogfood 继续负责另外两层无法独立覆盖的问题：
 - 完整请求预算与真实 Provider tokenizer、Hook 注入组合后是否仍然成立；
 - REPL 内存状态与磁盘 Snapshot 是否同步；
 - Summary contract 与实际消息形态组合后是否仍能工作；
-- Plugin 加载机制与真实浏览体验是否同时成立；
 - Permission park、人工决定与原 Agent Loop 是否能无伪造消息地连续运行；
-- 各模块单独正确后，Resume 与 Subagent 的组合行为是否仍然正确。
+- Clear、Resume 与 Permission state 组合后是否仍然正确。
 
 三层验证分别回答不同问题：
 
