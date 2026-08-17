@@ -2,12 +2,8 @@
 
 *Goal、Permission 与 Sandbox 如何共同支撑 Coding Agent 的长程任务*
 
-> 写于 2026-08-04，重写于 2026-08-07  
-> 这是我在 [OpenHarness](https://github.com/maisieyang/open-harness)
-> 中实现并 dogfood `/goal`，随后重构 Permission 与 Sandbox runtime 的工程复盘。
 
-
-## 一、为什么我要实现 `/goal`
+## 为什么我要实现 `/goal`
 
 我给自己的 harness 实现 `/goal` 时，解决的是一个非常具体的问题：过去每一轮
 assistant 回复结束后，都要由人来决定下一步。
@@ -30,7 +26,7 @@ assistant 回复结束后，都要由人来决定下一步。
 这就是我实现 `/goal` 的原因：用户不再逐轮告诉模型下一步做什么，而是把整个任务委托给系统。
 Goal 不替工作模型选择实现步骤，也不改变工具权限；它只是把委托单位从一轮对话提升为整个任务。
 
-## 二、我是怎么实现 `/goal` 的
+## 我是怎么实现 `/goal` 的
 
 但要让这种 task 级委托真正成立，系统必须回答三个问题：
 
@@ -172,7 +168,7 @@ Goal 因此不是贴在 prompt 上的一句“请持续努力”，而是一个�
 然后它停在了一次 permission 上。
 
 
-## 三、为什么有了 `/goal`，人还是不能离开
+## 为什么有了 `/goal`，人还是不能离开
 
 Worker 想执行一条 Bash 命令，permission checker 返回了 `ASK`。
 
@@ -232,7 +228,7 @@ Permission 主要降低第一项；Sandbox 主要降低第二项。只优化其�
 看守时，处理动作授权并限制错误动作的最坏后果。
 
 
-## 四、调研 Claude Code 与 Codex：先判断意图，还是先建立边界
+## 调研 Claude Code 与 Codex：先判断意图，还是先建立边界
 
 为了决定自己的 permission 应该怎样演进，我调研了 Claude Code 与 Codex。
 
@@ -283,7 +279,7 @@ automatic reviewer。Reviewer 失败、输出不可解析或命中高风险策�
 [Codex Auto-review](https://learn.chatgpt.com/docs/sandboxing/auto-review)
 
 
-## 五、我的选择：先限制最坏后果
+## 我的选择：先限制最坏后果
 
 我的问题发生在长程任务中。
 
@@ -539,7 +535,7 @@ Park 不是失败退出，而是一份可恢复的人机交接：
 > 机器已经推进到当前能力边界。这里需要人的新决定，所以任务先释放执行资源，等决定出现后
 > 再继续。
 
-## 六、回到长程任务：Goal、Permission 与 Sandbox 如何闭环
+## 回到长程任务：Goal、Permission 与 Sandbox 如何闭环
 
 现在再看长程任务，三个机制分别填补了人离场后留下的三个控制空位：
 
