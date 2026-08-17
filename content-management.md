@@ -8,8 +8,6 @@
 > Subagent 后，对 Content Management 形成的一套工程认知。
 
 
-## 两轮认知：先设计系统，再让系统接受反馈
-
 一个完整的 Content Management 系统，管理的不只是 Context Window 接近上限时的压缩，而是
 信息在 Agent 生命周期中的流动：模型每一轮应该看到什么，Tool Result 以什么形态进入输入，
 较早历史如何退出，长期知识如何按需回来，Session 如何恢复，以及父子 Agent 之间继承什么。
@@ -17,34 +15,12 @@
 这些问题分别对应信息的选择、限流、压缩、外置、恢复与隔离。它们共同决定每一次推理的
 Working Set：模型此刻能看到什么、看不到什么，以及可以在什么能力边界内采取行动。
 
-我对这套系统的认知经历了两个阶段。
+我对这套系统的认知经历了两个阶段：先从第一性原理出发，从 0 到 1 设计信息的载体、生命周期
+和边界；再让 Plan、Default、Goal、Tool、Compact、Memory、Resume、Plugin 与 Subagent 进入同一条
+dogfood 链路，观察这些选择穿过完整 Agent 生命周期后会暴露什么问题。
 
-第一阶段，是从 0 到 1 设计系统。我从第一性原理拆分问题，为不同信息选择载体、生命周期和
-边界。这个阶段已经形成了 Content Management 的整体架构；每个选择都是一个假设，也意味着
-我主动放弃了其他方案，并接受相应的代价。
-
-第二阶段，是让系统真正跑起来。当 Plan、Goal、Tool、Compact、Memory、Resume、Plugin 和
-Subagent 进入同一条 dogfood 链路，许多单个模块无法暴露的接缝开始出现。Dogfood 让我看见，
-第一阶段的每个架构选择，只有穿过完整的 Agent 生命周期，才会暴露真正需要守住的边界。
-
-整个过程可以概括为：
-
-```text
-第一性原理
-    ↓
-架构选择
-    ↓
-可运行系统
-    ↓
-Dogfood 反馈
-    ↓
-修正实现与认知
-    ↓
-沉淀为测试、Eval 与工程契约
-```
-
-设计给出系统的完整性，dogfood 给出系统的真实性。本文先说明这些架构选择如何形成，再说明
-真实运行如何检验并修正它们。
+这篇文章以系统设计为主线，解释 OpenHarness 如何持续编译下一次推理的 Working Set；最后用
+两个真实案例说明，实践如何让我进一步看见确定性信息损失与语义信息损失。
 
 
 ## 起点：Context 不是记忆，而是一次推理的工作集
@@ -92,48 +68,44 @@ Plugin Capabilities       Available Tools
 究竟应该恢复什么。
 
 
-## 第一部分：从 0 到 1 设计 Content Management 系统
+## OpenHarness 如何编译下一次 Working Set
 
-从系统视角看，Content Management 不是单个 Compact 功能，而是一条完整的信息生命周期：
+从系统视角看，Content Management 不是单个 Compact 功能，而是贯穿 Agent 生命周期的编译
+过程。它首先表现为一条不断重新编译输入的主循环：
 
-```text
-不同信息来源 ──→ 编译 Working Set ──→ LLM 判断
-                                             ↓
-                              Assistant Message 进入 Conversation
-                              ├── 不含 ToolUse ──→ 直接回复 ──→ 当前 Agent Loop 结束
-                              └── 含 ToolUse ──→ 执行 Tool
-                                                     ↓
-                                              Raw Tool Result
-                                                     ↓
-                                              入口预算与截断
-                                                     ↓
-                                      ToolResult 进入 Conversation
-                                                     ↓
-                                         编译下一次 Working Set
-                                                     ↓
-                                                 LLM 判断
+```mermaid
+flowchart TB
+    S["其他信息来源<br/>System / Project Instructions<br/>Tools · Skills · Goal · Memory Index"]
+    H["Conversation"]
+    C["编译完整请求草稿"]
+    B{"是否超过输入预算？"}
+    K["清理旧 ToolResult<br/>必要时生成 Summary"]
+    W["本次 Working Set"]
+    L["LLM 判断"]
+    O{"模型输出"}
+    R["Assistant Message"]
+    T["ToolUse → 执行 Tool<br/>入口预算后的 ToolResult"]
 
-Conversation 持续增长
-      ↓
-完整请求接近输入预算
-      ↓
-管理历史信息
-  ├── 清理旧 ToolResult
-  ├── 必要时 Summary 较早 Conversation
-  └── 原样保留 recent Context
-      ↓
-重新编译 Working Set
-
-Prompt 之外
-      ├── Project Memory：跨 Session 的长期知识
-      ├── Snapshot：当前 Session 的恢复状态
-      └── Subagent：为子任务重新构造的隔离 Context
+    S --> C
+    H --> C
+    C --> B
+    B -- "否" --> W --> L --> O
+    B -- "是" --> K --> C
+    O -- "直接回复" --> R --> H
+    O -- "调用工具" --> T --> H
 ```
 
-沿着这条生命周期，我连续做出了六组设计选择。
+这张图只描述主循环。Project Memory、Snapshot、Resume 和 Subagent 不是循环之后依次发生的
+“第三阶段”：Memory 为未来推理提供新的信息来源；Snapshot 把 Conversation 与控制状态落盘；
+Resume 把磁盘状态与当前运行环境重新合并；Subagent 则从一次 ToolUse 分叉出独立 Conversation，
+最后把结果送回父循环。
 
+下面分别从三个位置展开这套设计：进入 LLM 前如何选择信息和能力，模型行动后如何控制证据增长，
+以及信息跨过 Session 或 Agent 边界时如何保存、恢复与隔离。
 
-### 1. 先决定什么进入 Working Set
+### 进入推理前：选择信息，塑造行动空间
+
+#### 选择什么进入 Working Set
 
 一次 Agent 推理所需的信息可以粗略分成三类：
 
@@ -195,7 +167,7 @@ Base Instructions
 什么”。Content Management 需要同时设计这两层。
 
 
-### 2. 不只管理信息，还要塑造行动空间
+#### Tool surface 如何塑造行动空间
 
 Content Management 从一开始就不只是“模型知道什么”，还包括“模型能做什么”。Tool catalog
 本身就是 Context 的一部分。
@@ -222,7 +194,9 @@ Tool catalog、dispatch registry 与 Permission policy 彼此一致，不能只�
 却仍然允许隐藏能力在运行时执行。
 
 
-### 3. 在每个 Tool Result 上控制信息增长
+### 任务运行中：控制证据增长，压缩较早历史
+
+#### 在每个 Tool Result 上控制信息增长
 
 长程 Agent 中，Context 增长最快的部分通常不是用户聊天，而是文件内容、搜索结果、测试日志、
 Traceback、网页正文和 Subagent 返回。
@@ -266,7 +240,7 @@ Grep：按名称或 anchor 精确找回事实
 负责判断哪些旧语义应该继续保留。
 
 
-### 4. Conversation 过长后，如何在损失发生前划清边界
+#### Conversation 过长后，如何划清损失边界
 
 单条 Tool Result 已经受到入口预算控制，Conversation 仍然会随着任务推进持续增长。超过整体
 阈值后，OpenHarness 不再按 Tool 名称猜测哪些结果“值得清理”，而是在完整 Conversation 上
@@ -325,109 +299,173 @@ Prompt Too Long 表示 Provider 明确拒绝了当前请求，原样重试没有
 只重新编译一次上下文：保留预算内最大的、协议完整的 recent 后缀，把更早历史交给 Summary，
 然后重建请求。第二次仍然过长就明确报错，不再继续删除 Conversation。
 
-#### Summary 要为下一次推理留下什么
+#### Summary：压缩 older，原样拼回 recent
 
-Conversation 是一条按时间增长的事件流，Summary 却不应该成为它的缩写版。它真正要回答的
-只有一个问题：
-
-> 当较早历史退出输入后，下一次推理还必须知道什么，才能继续工作，而不重复已经完成的事情、
-> 不误判当前状态，也不操作错对象？
-
-这个问题通常落到三类信息：当前目标与约束，已经验证的当前状态，以及仍未完成的工作。
-
-### 5. 把长期知识与精确恢复放在 Prompt 之外
-
-不是所有需要保存的信息都应该永久进入 Prompt。长期知识与 Session 恢复尤其需要离开当前
-Working Set，但它们解决的不是同一个问题。
-
-Project Memory 回答的是：哪些知识在未来 Session 中可能再次有用？它允许模型持续整理内容，
-通过轻量索引发现，再按需读取具体正文。它追求长期相关性，不保存每一轮对话顺序。
-
-Snapshot 回答的是：如果当前进程退出，怎样恢复这段 Session？它需要保留 Conversation 的
-typed blocks、Goal 状态和 Permission continuation 等可恢复状态，不能让 LLM 自由改写。
-
-我没有把两者收进一个模糊的 Memory Service。一个允许语义整理，一个要求结构保真；一个服务
-跨 Session 知识复用，一个服务当前 Session 的精确恢复。统一文件格式或接口不会消除这种职责
-差异，只会隐藏冲突。
-
-Resume 也不是把磁盘 JSON 原样塞回 Prompt。恢复时，历史消息来自 Snapshot，当前 Tool
-registry、Plugin 开关、Skills、Project Instructions 和 Permission boundary 则由当前运行环境
-重新建立。不兼容的 Permission profile 不能静默沿用。
-
-所以 Resume 的本质是：
+旧 ToolResult 清理后仍然超过预算，OpenHarness 才进入语义压缩。实现不再抽象讨论哪些信息
+“应该”留下，而是先划出一条明确的物理边界：自动 Compact 默认保护最后 12 条 Message；用户
+显式执行 `/compact` 时保护最后 2 条。边界以前是 `older`，边界以后是 `recent`。
 
 ```text
-历史 Session 状态
-        +
-当前运行环境与能力边界
-        ↓
-重新编译下一次 Working Set
+清理后的 Conversation
+        │
+        ├── older ──→ 追加专用 Handoff 请求 ──→ LLM Summary
+        │                                      Tools = []
+        │                                          ↓
+        └── 原始 recent ───────────────────────────┐
+                                                   ↓
+下一次 Conversation = boundary marker + Summary + 原始 recent
 ```
 
-这个设计比“保存一段自然语言摘要，下次告诉模型继续”更复杂，但它保留了 ToolUse、ToolResult
-和控制状态之间的协议关系。
+这里有三项由代码保证。第一，只有 `older` 会发给 Summary 模型；`recent` 从原始 Conversation
+直接切出，不经过清理或改写。第二，Summary 调用禁用全部 Tools，并在历史末尾追加一条专用 User
+Message，避免模型把任务理解成继续对话。第三，只有拿到非空 Summary 后才替换历史；自动 Compact
+失败时继续使用已经完成 ToolResult 清理的 Conversation，显式 `/compact` 失败则报告原因并保持
+原 history 不变。
 
+当前 Summary Prompt 把模型设定为下一位 LLM 的任务交接者，要求它输出结构化 Handoff，并保留
+当前状态、关键证据、约束、标识与未完成工作。这些栏目和措辞可以继续迭代；真正稳定的设计边界
+是：代码决定 `older` 与 `recent`、控制何时允许有损转换并负责重组，LLM 只负责把 `older` 转换
+成较短的语义状态。
 
-### 6. 隔离也是 Content Management
+### 跨越边界：四种机制解决四个问题
 
-信息不应该进入当前 Prompt，同样不意味着它可以无条件跨过其他边界。
+信息离开当前 Working Set 以后，并不只有“保存”或“丢失”两种结果。跨越边界时，Harness 还要
+回答三个问题：保存到什么保真度，下一次以什么方式取回，以及恢复后谁是当前权威。
 
-Plugin 启用后，只通过明确的能力 surface 改变系统；未启用的 Plugin 不进入当前能力面。
-Namespaced Skills 保留来源，避免多个 Plugin 对同名能力产生歧义。
+OpenHarness 没有用一个统一的 Memory Service 回答所有问题，而是把它拆成 Project Memory、
+Snapshot、Resume 和 Subagent。它们分别处理长期知识、精确状态、会话重建和推理隔离。
 
-Subagent 也不机械继承父 Agent 的完整 Conversation。子任务通常只需要明确目标、必要事实、
-相关文件和合适工具。复制父历史会同时带入无关争论、旧错误和不属于子任务的行动倾向。
+#### Project Memory：常驻索引，正文按需进入
 
-我选择让 Subagent 使用独立 Working Set，父 Agent 只接收最终 Agent Tool Result。代价是父级
-必须明确交接目标与必要背景；收益是子任务的注意力更集中，内部消息和 Tool 调用也不会无条件
-膨胀父 Conversation。
+Project Memory 保存的不是完整 Conversation，而是未来 Session 仍可能有用、又无法从当前代码
+和 Git 重新推导的知识，例如用户反馈、协作偏好、项目背景和外部系统入口。
 
-到这里，设计阶段的完整地图已经形成：选择、塑形、限流、压缩、外置和隔离共同管理一次推理
-真正可见的信息。
+每个项目使用一个由 `cwd` 的绝对路径计算出的独立目录：
 
-```mermaid
-flowchart LR
-    subgraph F["OpenHarness 的具体功能"]
-        direction TB
-        F1["System Prompt · Project Instructions<br/>Tool / Skill Catalog · Memory Index"]
-        F2["Default · Plan · Goal<br/>Tool Registry · Permission Runtime"]
-        F3["PostToolUse Budget<br/>Head / Tail + Truncation Marker"]
-        F4["Recent Message / Tool 边界<br/>[cleared] · Summary"]
-        F5["Project Memory · Snapshot<br/>/clear · --resume"]
-        F6["Subagent 独立 Working Set<br/>父级只接收 Agent ToolResult"]
-    end
-
-    subgraph D["Content Management 决策"]
-        direction TB
-        D1["选择<br/>什么应该进入"]
-        D2["塑形<br/>暴露哪些能力"]
-        D3["限流<br/>Tool Result 如何进入"]
-        D4["压缩<br/>较早历史如何退出"]
-        D5["外置与恢复<br/>什么离开，如何回来"]
-        D6["隔离<br/>跨 Agent 继承什么"]
-    end
-
-    F1 --> D1 --> W["下一次推理的 Working Set<br/>可见信息 + 能力边界"]
-    F2 --> D2 --> W
-    F3 --> D3 --> W
-    F4 --> D4 --> W
-    F5 --> D5 --> W
-    F6 --> D6 --> W
-    W --> L["LLM 判断与行动"]
+```text
+~/.openharness/memory/<project-name>-<cwd-hash>/
+├── MEMORY.md          # 轻量索引
+├── feedback-a.md      # 独立 Memory 正文
+└── project-b.md
 ```
 
+启用 Memory 且 System Prompt 没有被 Bundle 完全替换时，OpenHarness 会在每轮推理前重新读取
+`MEMORY.md`，最多取前 200 行，与 Memory 使用规则一起放进 System Prompt。具体 Memory 正文
+不会被自动注入，也没有生产路径上的关键词排序器替模型选择。模型先看见一行式索引，判断某项
+可能相关后，再通过 `Read` 加载对应文件：
 
-## 第二部分：系统跑起来以后，我在 Dogfood 中看见了什么
+```text
+MEMORY.md 索引进入 System Prompt
+              ↓
+模型判断某项 Memory 是否相关
+          ├── 否：不支付正文 Token
+          └── 是：Read 对应 .md 正文
+```
 
-设计阶段给出的仍然是我的架构假设。单元测试可以证明每个函数满足自己的 contract，却不能
-保证信息走完整条链路后，模型看到的仍然是我以为它会看到的东西。
+写入也由模型通过普通工具完成，而不是在每轮结束后由 Harness 自动抽取。当前 Prompt 规定两步
+协议：先用 `Write` 创建或更新独立 Memory 文件，再用 `Edit` 给 `MEMORY.md` 增加一行入口。
+索引负责发现，正文负责承载细节；旧内容需要由模型更新或删除。
 
-Dogfood 的价值，就在于让这些假设进入真实生命周期。它既会发现缺陷，也会证明某些设计确实
-成立。这里记录的不只是手动会话里直接看见的现象，也包括沿着这些现象继续检查源码、重构系统
-后形成的新认识。
+这个设计的核心取舍是渐进式暴露。它避免所有长期知识永久占用 Context，却把索引质量和读取
+决策交给了模型。Memory 也不能直接覆盖当前证据：如果记忆与代码、测试或外部系统的当前状态
+冲突，应以重新观察到的事实为准，并更新过时 Memory。
+
+#### Snapshot：保存能够精确恢复的 Session 状态
+
+Snapshot 解决的不是“未来值得记住什么”，而是“进程现在退出，怎样让这段 Session 继续”。
+因此它不能把状态改写成自然语言摘要，而要保留协议结构。
+
+OpenHarness 在每个 Agent turn 的终止路径上，把状态序列化成版本化 JSON。Conversation 中的
+`TextBlock`、`ToolUseBlock` 和 `ToolResultBlock` 都保留类型标识；同时保存模型参数、Tool
+metadata、Permission profile 指纹，以及可恢复的 Permission runtime 状态。JSON 位于另一个
+按 `cwd` 隔离的目录：
+
+```text
+~/.openharness/snapshots/<project-name>-<cwd-hash>/
+├── current.json       # 当前 Session 的最新状态
+└── history/           # 被下一次写入轮换下来的旧版本
+```
+
+写入使用同目录临时文件加原子替换。覆盖前先读出旧 `current.json`，新的 current 原子生效后，
+再把旧内容写入 `history/`；轮换默认最多保留 100 份、90 天。Snapshot 写入失败只记录 warning，
+不让已经完成的 Agent turn 变成失败。
+
+`/clear` 也因此不是只执行一次 `history = []`。它会清空 REPL 内存中的 Conversation 和 pending
+Permission state，再原子地把磁盘 `current.json` 替换成零消息状态。否则进程退出后，
+`--resume` 仍会把已经 Clear 的旧 Conversation 带回来。
+
+#### Resume：用磁盘历史与当前运行时重新组装 Session
+
+Snapshot 是存储格式，Resume 是恢复策略。恢复不能简单选择“完全相信磁盘”或“完全重新开始”，
+因为历史事实和当前能力的权威来源不同。
+
+公开 REPL 的 `oh --resume` 先按当前配置建立 Tool registry、Skills、Plugins、Project
+Instructions、Sandbox 和 Permission profile，再读取当前项目的 Snapshot。加载时会拒绝 cwd
+不匹配、无法解析或版本过新的文件；Git HEAD 变化只产生 warning，因为代码变化值得提醒，却
+不必自动抹掉会话。
+
+恢复时，两类信息在边界处汇合：
+
+| 来自 Snapshot | 来自当前运行环境 |
+|---|---|
+| typed Conversation | Tool 与 MCP registry |
+| parked Permission continuation | Skills、Plugins 与 Project Instructions |
+| Goal 的 transcript sentinels | 当前 System Prompt 与 Memory Index |
+| 已发生的 ToolUse/ToolResult | Sandbox、Permission profile 与执行边界 |
+
+Permission runtime 只有在 Snapshot 中保存的 profile 指纹与当前 canonical profile 一致时才能
+恢复；Active Goal 则从 Conversation 里的 `set`、`met`、`cleared` sentinels 重建。下一轮使用的
+System Prompt 和能力面仍按当前环境重新编译，而不是让旧 Snapshot 永久覆盖新配置。
+
+所以 Resume 的本质不是“把 JSON 塞回 Prompt”，而是一次带权威边界的状态合并：过去发生过
+什么由 Snapshot 提供，现在能够做什么由当前运行时决定。
+
+#### Subagent：隔离 Conversation，继承运行时
+
+Subagent 解决的是同一 Session 内的另一种边界：怎样让一段多步调查拥有自己的注意力空间，
+又不把全部内部过程写回父 Conversation。
+
+在实现上，`Agent` 只是一个普通 Tool。父模型调用它时提供 `description` 和一段完整 `prompt`；
+`SpawnAgent.execute()` 通过 `dataclasses.replace()` 从父 `QueryContext` 构造子 Context，并把
+`agent_depth` 加一。子 Agent 默认继承父级的模型、System Prompt、Tool registry、Skills、cwd、
+Hooks、Memory、Sandbox、Permission runtime 和授权上下文，但它不继承父 Conversation：
+
+```text
+父 Agent：Agent(prompt=完整子任务)
+                ↓
+继承运行时能力与安全边界
+                +
+新的 Conversation = [这条子任务]
+                ↓
+子 Agent 独立运行同一个 Agent Loop
+                ↓
+最终文本成为一个 Agent ToolResult
+                ↓
+父 Conversation 只增长一组 ToolUse + ToolResult
+```
+
+因此，这里的“隔离”必须准确理解为 Conversation 隔离，而不是最小权限隔离。当前默认 Subagent
+拥有与父 Agent 相同的 Tool surface；构造器虽然预留了 `tool_filter`，生产实现并未应用它。
+递归只由 `max_agent_depth` 限制，默认最多 3 层。
+
+这个选择显著减少了父 Conversation 的增长，也避免子任务被父历史中的旧错误和无关讨论干扰。
+代价是父 Agent 必须把目标、约束和必要背景写进那条 `prompt`；父级最终只看见子 Agent 的结论，
+而看不见它内部完整的 Conversation 与 Tool 轨迹。
+
+四个机制由此形成了清晰分工：Project Memory 决定哪些知识值得跨 Session 存活，Snapshot 决定
+哪些状态必须精确落盘，Resume 决定旧状态如何与当前能力合并，Subagent 决定一次推理分支应当
+继承什么、隔离什么。它们都在管理信息如何跨过边界，但对保真度、权威来源和重新进入 Context
+的方式作出了不同选择。
 
 
-### 1. 信息存在，不等于模型看见
+## 两个 Dogfood Case：设计在哪些接缝处失效
+
+单元测试可以证明每个函数满足自己的 contract，却不能保证信息走完整条链路后，模型看到的
+仍然是我以为它会看到的东西。下面只保留两个真正改变我判断的案例：一个是确定性的信息损失，
+另一个是 Summary 引入的语义损失。
+
+
+### Case 1：信息存在，不等于模型看见
 
 **我最初的选择**：给每个 Tool Result 设置预算。我的出发点很直接：一条测试日志或文件内容
 不能占满整个 Context。
@@ -472,26 +510,7 @@ flowchart TB
 找回。限流不再假装没有损失，而是把损失本身变成模型可见的事实。
 
 
-### 2. Conversation 没有超限，不等于请求放得下
-
-**我最初的选择**：用 Conversation 的 Token 数决定何时 Compact。它是增长最快的部分，也最
-容易被测量。
-
-**继续向下追以后，我看见**：Provider 接收的并不只有 Conversation。System Prompt、Project
-Instructions、Tool 与 MCP schemas、输出 Token 预留，以及 Hook 动态加入的内容，都共享同一个
-Context Window。只计算 Conversation，会让本地判断“还能放下”的请求被 Provider 直接拒绝。
-
-**这改变了我的判断**：容量属于完整请求，不属于某一种消息来源。随着 MCP 和 Plugin 增加，
-能力描述本身也会成为主要 Context 成本。
-
-**我最后怎么改**：系统先编译包含 System Prompt、Tool schemas 与 Conversation 的请求草稿，
-扣除输出预留后决定是否清理或 Summary。PreApiCall Hook 随后仍可能改变实际请求；如果
-Provider 返回 Prompt Too Long，恢复逻辑会根据这份被拒请求的实际开销只做一次语义重编译，
-并重新应用明确选择了 rebuild 的动态 Hook。第二次仍失败就报告预算诊断并显式结束，不在重试
-循环里盲删 Conversation。
-
-
-### 3. 事实还在，不等于 Handoff 仍然正确
+### Case 2：事实还在，不等于 Handoff 正确
 
 **我最初的理解**：Summary 就是给 LLM 一段 Prompt，让它把较早 Conversation 压缩成结构化
 文本，再与原始 recent tail 一起交给后续模型。
@@ -501,122 +520,32 @@ Slash Skill 被描述成模型主动调用了 `LoadSkill`；较早错误会被�
 会重新变成当前待办；总结请求本身也曾被误认为用户任务。文字仍然通顺，关键词也还存在，但
 provenance、时间顺序和当前状态已经改变。
 
-**我的第一次修正**，是给 Summary Prompt 加入更严格的结构和更多保真规则：明确 provenance、
-错误顺序、最新状态、路径、命令和 ID，再用 Eval 检查这些事实是否存活。这解决了一部分真实
-缺陷，但也让我逐渐看见另一个问题：Prompt 越来越像一份 Conversation 归档模板，而不是交给
-下一位模型的工作状态。要求复述更多栏目，不一定带来更好的延续，反而会让旧历史和 Summary
-请求本身继续竞争“当前工作”的位置。
+**我的第一次修正**，是给 Summary Prompt 加入更严格的结构和更多保真规则，再用 Eval 检查
+这些事实是否存活。它解决了一部分缺陷，却也让 Prompt 越来越像 Conversation 归档模板，而
+不是交给下一位模型的工作状态。要求复述更多内容，不一定带来更好的延续。
 
-**这再次改变了我的判断**：Summary 的目标不是“保留尽可能多的句子”，而是为下一位模型生成
-可靠的任务交接。来源、顺序、最新状态和未完成工作不是附属元数据，而是后续决策直接依赖的
-事实；Prompt 的结构本身也会决定模型把什么当作重要信息。
+**这再次改变了我的判断**：Summary 的目标不是保留尽可能多的句子，而是完成可靠的任务交接。
+来源、顺序、最新状态和未完成工作不是附属元数据，而是后续决策直接依赖的事实。
 
-**我最后怎么改**：Compact Prompt 收敛为六段 Handoff：Current Objective、Current State、
-Verified Evidence、Decisions and Constraints、Active Artifacts、Remaining Work。专用 User
-Message 明确要求生成交接状态而不是续写对话，Summary 调用禁用 Tools；确定性代码只清理
-保护范围外的旧 ToolResult，不改写用户消息、Assistant 结论和 recent tail。
-
-这些语义决策面由 `memory_compact` Eval 验证。由于基础 Prompt 已改变，旧 cassette 不再能
-证明当前行为；10 个 cases 必须重新完成 live、record 与 replay，才能建立新的可信基线。
-即使全部通过，也只证明已定义决策面，而不是任意 Conversation 都能被可靠压缩。
-
-### 4. Conversation 不是 Session 的全部状态
-
-**我最初的实现**：Snapshot 主要恢复 Conversation；`/clear` 清空内存中的消息。权限请求暂停
-后，用户的批准或拒绝则被包装成一条 synthetic 用户消息，再交给模型决定如何继续。
-
-**Dogfood 让我看见**：`/clear` 后退出再 Resume，磁盘 Snapshot 会让旧消息重新出现；审批链路
-中的 synthetic 消息也不是真正的 continuation。它既伪造了用户没有说过的内容，也丢失了一次
-多 Tool 调用具体停在哪里、哪些结果已经完成等控制状态。
-
-**这改变了我的判断**：Session 不只有 Conversation。Active Goal、parked Permission、Tool
-batch 的中断位置，以及“这段历史已经被 Clear”本身，都是需要保存和恢复的状态；但这些状态
-不应该为了让模型看见而被伪装成对话消息。
-
-**我最后怎么改**：Snapshot 保存 typed Conversation 与可恢复控制状态；`/clear` 同时清空内存
-状态并原子替换磁盘 Snapshot。Permission 使用独立 parked continuation 保存 exact request、
-已完成结果和 controller 状态，`/approve` 或 `/deny` 直接接回原 Agent Loop，不再向
-Conversation 插入 synthetic 用户消息。
+**我最后怎么改**：Summary Prompt 只追问接手者继续工作所需的最小状态，并在历史末尾追加一条
+专用请求，明确要求生成 Handoff，而不是续写上面的对话。确定性代码负责划定 older 与 recent，
+Summary 负责语义选择；`memory_compact` Eval 则分别检查最新状态、Skill provenance 和错误顺序
+能否在转换后继续成立。
 
 
-## 第三部分：把反馈重新编译成工程认知
+## 这些边界如何验证
 
-Dogfood 没有推翻我的全部设计。许多第一性原理选择被证明是正确方向，真实使用则进一步告诉
-我，这些方向必须精确到什么程度。
+Content Management 同时包含确定性状态转换、模型生成行为和跨模块生命周期，三者不能用同一种
+测试证明。
 
-| 设计阶段已经形成的判断 | Dogfood 后加深的认识 |
-|---|---|
-| Tool Result 必须限流 | 限流还必须让模型知道证据在哪里发生了损失 |
-| Conversation 需要容量预算 | 真正共享 Context Window 的是完整 Provider 请求 |
-| Summary Prompt 必须保留关键事实 | Summary 是任务 Handoff；来源、顺序与当前状态需要独立 Eval |
-| Snapshot 负责 Resume | Session 还包含 Goal、Permission continuation 等非对话状态 |
+| 验证层 | 回答的问题 | 典型对象 |
+|---|---|---|
+| TDD | 结构和状态转换是否正确 | ToolUse/ToolResult 配对、预算、recent 边界、Snapshot |
+| Capability Eval | 模型的语义转换是否达到契约 | Summary 的当前状态、provenance、错误顺序 |
+| Dogfood | 信息走完整生命周期后是否仍然成立 | Tool 截断、Compact、Resume、Permission 的组合链路 |
 
-这张变化表揭示了我的两轮认知如何接在一起：设计负责提出可组合的系统假设，dogfood 负责让
-这些假设面对完整生命周期。反馈最终不应该只停留在一次修复里，还需要进入可重复执行的验证
-体系。
-
-
-### TDD 守确定性不变量
-
-可以精确定义的行为由测试直接约束：
-
-- Tool Result 是否保留头尾和截断 marker；
-- ToolUse 与 ToolResult 是否保持协议配对；
-- 完整请求预算是否包含 System Prompt、Tool schemas 与输出预留；
-- Prompt Too Long 是否只触发一次协议完整的语义重编译；
-- Plan 下写入和委派工具是否真的不可见；
-- Clear 是否同步更新磁盘 Snapshot；
-- Snapshot 是否能 round-trip typed content blocks；
-- parked Permission 是否保持 exact request 与 Tool batch 位置，并在批准或拒绝后准确续接；
-- Resume 是否拒绝不兼容的 Permission profile，并在当前边界内恢复 continuation。
-
-这些问题有唯一、可观察的结构结果，不应该交给模型 Eval 判断。
-
-
-### Capability Eval 守语义转换
-
-需要模型选择和生成的地方，用小而明确的决策面验证：
-
-- Compact 是否保留最新状态；
-- 是否区分用户选择的 Slash Skill 与模型主动 Tool call；
-- 是否保留错误发生顺序和 latest error；
-- 是否保留未来工作依赖的事实，同时丢弃 filler。
-
-这里不要求人写出唯一正确的 Summary。人负责定义 Capability claim、必须成立的效果和覆盖面；
-AI 可以生成 fixture、case 与 scorer 实现。最终把关的不是某段标准答案，而是系统承诺的行为
-是否被真正测量。
-
-
-### Dogfood 守完整生命周期与跨层接缝
-
-Dogfood 继续负责另外两层无法独立覆盖的问题：
-
-- 正确的截断 primitive 是否真的接到 Bash 输出；
-- 完整请求预算与真实 Provider tokenizer、Hook 注入组合后是否仍然成立；
-- REPL 内存状态与磁盘 Snapshot 是否同步；
-- Summary contract 与实际消息形态组合后是否仍能工作；
-- Permission park、人工决定与原 Agent Loop 是否能无伪造消息地连续运行；
-- Clear、Resume 与 Permission state 组合后是否仍然正确。
-
-三层验证分别回答不同问题：
-
-```text
-TDD       结构和状态转换是否正确？
-Eval      模型在一个决策面上的行为是否达到契约？
-Dogfood   信息走完整条生命周期后，真实体验是否仍然成立？
-```
-
-于是，认知形成了闭环：
-
-```text
-设计选择
-    ↓
-Dogfood 反馈
-    ↓
-确定性不变量 ──→ TDD
-语义决策面   ──→ Eval
-完整生命周期 ──→ 持续 Dogfood
-```
+TDD 不能证明 Summary 质量，有限 Eval 不能证明所有长对话，Dogfood 也不能替代可重复回归。它们
+分别守住代码硬机制、Prompt 软契约和跨层接缝。
 
 
 ## 充分利用有限输入，不是塞得更多

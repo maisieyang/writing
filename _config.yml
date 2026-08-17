@@ -1,12 +1,11 @@
 title: Maisie · Writing
-description: Essays on agent harness — 拆解 Anthropic 产品逻辑 / harness 流行的底层条件
+description: 关于 Coding Agent、Agent Harness，以及技术变化如何重新塑造产品、工作与组织的长期写作
 lang: zh-CN
 theme: minima
 markdown: kramdown
 
-header_pages:
-  - anthropic-product-logic.md
-  - why-harness-2025.md
+# 首页已经承担完整目录，避免在窄屏页头重复铺开长文章标题。
+header_pages: []
 
 minima:
   social_links:

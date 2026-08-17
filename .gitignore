@@ -1,0 +1,4 @@
+.claude/settings.local.json
+.jekyll-cache/
+.sass-cache/
+_site/
