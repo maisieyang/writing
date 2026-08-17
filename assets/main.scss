@@ -48,6 +48,11 @@
   color: $grey-color;
 }
 
+.footer-description {
+  margin-bottom: 0;
+  color: $grey-color;
+}
+
 @media screen and (max-width: 600px) {
   .site-header__inner {
     grid-template-areas:
