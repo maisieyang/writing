@@ -3,18 +3,77 @@
 
 @import "minima";
 
-// Keep the article navigation readable instead of flowing all titles together.
-.site-nav .page-link {
-  display: block;
-  margin-left: 0;
-  margin-right: 0 !important;
-  padding: 4px 10px;
+.site-header__inner {
+  display: grid;
+  grid-template-areas:
+    "title nav"
+    "description nav";
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 32px;
+  align-items: center;
+}
+
+.site-title {
+  grid-area: title;
+  float: none;
+  padding-top: 12px;
+  line-height: 1.35;
+}
+
+.site-description {
+  grid-area: description;
+  margin: 2px 0 12px;
+  color: $grey-color;
+  font-size: 14px;
   line-height: 1.5;
-  white-space: nowrap;
+}
+
+.site-nav {
+  grid-area: nav;
+  position: static;
+  float: none;
+  border: 0;
+  background: transparent;
+  line-height: 1;
+}
+
+.site-nav .page-link {
+  display: inline-block;
+  margin: 0 !important;
+  padding: 8px 0 8px 16px;
+  line-height: 1.5;
+}
+
+.site-nav .page-link[aria-current="page"] {
+  color: $grey-color;
 }
 
 @media screen and (max-width: 600px) {
-  .site-nav .page-link {
-    white-space: normal;
+  .site-header__inner {
+    grid-template-areas:
+      "title nav"
+      "description description";
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 16px;
+  }
+
+  .site-title {
+    padding-top: 10px;
+    font-size: 20px;
+  }
+
+  .site-description {
+    margin-top: 4px;
+    margin-bottom: 10px;
+  }
+
+  .site-nav {
+    position: static;
+    top: auto;
+    right: auto;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    text-align: right;
   }
 }
