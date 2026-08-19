@@ -117,28 +117,13 @@ Base Instructions
 方式让规则的来源和作用范围保持清楚，也避免把所有可能的说明永久塞进每一次输入。
 
 
-#### Plan 控制行动，Goal 控制停止
+#### Default、Plan 对模型可见能力的塑形
 
-Default 是 Session 的正常工作状态。Agent 使用当前已经启用的能力完成任务，直到模型自然返回
-不再包含 ToolUse 的回复。除此之外，我还需要解决两个不同的业务问题。
+Content Management 不只决定模型看见什么信息，也决定它看见什么能力。Default 是 Session 的
+正常工作状态，使用当前已经启用的完整能力面。Plan 面向“先调查，再决定是否行动”：模型可以
+读取代码、搜索资料和形成方案，但在用户明确批准之前，看不见修改、执行或委派任务所需的 Tool。
 
-Plan 面向的是“先调查，再决定是否行动”。用户希望模型读取代码、搜索资料和形成方案，但在
-明确批准之前，不应该修改文件、执行命令或把任务委派给另一个 Agent。这里需要控制的是当前
-允许采取什么行动。
-
-Goal 面向的是“不要因为一次回复结束就停止”。用户给出可验证的完成条件后，Agent 应持续工作、
-留下证据，并在条件尚未满足时自动继续。这里需要控制的是整个任务什么时候真正结束。
-
-因此，从用户视角看，Default、Plan 和 Goal 是三种工作方式；从实现上看，它们承担的是不同
-职责：
-
-| 工作方式 | Tool catalog | 控制的事情 |
-|---|---|---|
-| Default | 使用完整能力基线 | 正常完成一次任务交互 |
-| Plan | 只保留只读、非委派能力 | 当前允许采取什么行动 |
-| Goal | 与当前 Mode 相同 | 整个任务什么时候真正结束 |
-
-这种区别直接决定了实现。OpenHarness 先组装当前 Session 的能力基线：
+OpenHarness 先组装当前 Session 的能力基线：
 
 ```text
 内建 Tools
@@ -171,7 +156,13 @@ and tool.execution_domain is not DELEGATED_RUNTIME
 隐藏 Tool 调用。只读不是一句要求模型主动遵守的 Prompt，而是模型可见能力与运行时执行边界的
 共同结果。
 
-Goal 解决的是另一个问题，因此不参与 Tool 筛选：
+#### Goal：把完成条件加入 Working Set
+
+Goal 解决的是另一类问题：“不要因为一次回复结束就停止”。用户给出可验证的完成条件后，Agent
+应持续工作、留下证据，并在条件尚未满足时自动继续。
+
+Goal 不参与 Tool 筛选。它保留当前 Mode 的 registry，把完成条件加入 System Prompt，并在
+Agent 自然结束一次回复后，让独立 Judge 检查 Conversation 中的证据：
 
 ```text
 当前 Mode 的 registry
@@ -186,8 +177,8 @@ Agent 自然结束一次回复
 ```
 
 Goal 在 Plan 中也可以保持可见，让规划围绕完成条件展开，但 Judge 只在 Session 回到 Default 后
-运行。Default 提供能力基线，Plan 收窄行动空间，Goal 控制停止条件；三者共用同一个 Agent Loop，
-却不需要设计成三套 Tool registry。
+运行。Default 提供能力基线，Plan 收窄模型可见的行动空间，Goal 则控制整个任务什么时候结束。
+三者共用同一个 Agent Loop，却不需要设计成三套 Tool registry。
 
 
 #### 在每个 Tool Result 上控制信息增长

@@ -10,3 +10,6 @@ Goal 能让任务持续推进，却不足以让人离场：Permission、Sandbox 
 ### [Content Management：如何为 Coding Agent 管理有限注意力](./content-management.md)
 LLM 的输入不是记忆，而是每次推理的 Working Set：Harness 如何选择、限流、压缩和重建 Context，让信息保持
 充分、可信、当前且适配行动。
+
+### [一个 Coding Agent，到底应该怎么验证？](./agent-eval-demystified.md)
+我在 OpenHarness 中如何用 TDD、Eval 和 Dogfood 构成开发闭环，再用公共 Benchmark 建立外部坐标。
