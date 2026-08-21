@@ -1,112 +1,153 @@
-# 瓶颈在哪，交互重心就在哪：coding 工具四代变迁的一手记录
+# 瓶颈在哪，交互重心就在哪
 
-> 写于 2026-07-31，更新于 2026-08-05
-> 起点是我自己的迁移史：ChatGPT → Cursor → Claude Code → Codex app，四次换工具，每次都不是因为"新工具功能多"，而是因为旧交互突然不顺了。这篇把这条体感主线补上调研事实，看清楚背后的规律。
+*我深度使用 Claude Code 和 Codex，也在自己的 Harness 里实现了 Goal。这些经历让我看见同一件事：当 Agent 可以连续工作，人的职责会从逐轮推动执行，上移到定义目标、分配注意力和验收结果；coding 工具的交互重心也随之改变。Codex 的价值不在于用 GUI 取代 CLI，而在于它恰好接住了 Agent 能力提升之后，人的注意力成为新瓶颈的时刻。*
 
-## 引子：我的四次迁移
 
-最早是 ChatGPT，chat 的形式，在浏览器和 IDE 之间来回搬代码。然后 Cursor 出来，觉得真好用——因为那个当下工作的起点是以代码为中心，Cursor 是很棒的 copilot。后来模型越来越强，我开始用 Claude Code 就不再用 Cursor 了：交互的重点转移了，agent 要写绝大部分的代码，**agent 是主体，不是代码**。terminal 天然适合多 session、多任务，作为程序员，在 terminal 里做这一切都很自然。
+## 我为什么开始厌倦逐轮接棒
 
-然后我发现它不顺了。模型生成代码的速度明显超出了我的注意力可以 review 的范围。terminal 的 REPL 让我的体感开始变差：我在阅读的时候它在生成，页面会跳，我滚回去，它又生成，又跳。我把 terminal 放大到屏幕 70% 的面积，阅读体验还是不好。我跟不上它的实现细节，但我还不能离开——我需要不停地接 turn，机械地接，大多数只是 approve。
+我在使用 Claude Code 的过程中逐渐意识到：随着它能够独立推进越来越长的工作，REPL 开始不够用了。我需要 Goal。
 
-深度体验了两天 Codex app 之后，我知道这就是我目前想要的：左侧是任务管理，中心最好的位置给任务的信息交互流，右侧是可收起的 diff review 面板。关注点在 task 时有完美的阅读体验；要 check 代码改动时打开右侧栏——不是代码仓浏览器，是**这一次任务的改动**。关注点分离做到了极致，这是一个能让人产生心流的工具。
+Claude Code 在终端里读代码、提出方案、修改文件、运行测试，然后结束这一轮，等我接下一轮。很多时候，它并不是真的需要我做决定。下一步该做什么，它已经有建议；它建议的下一步是否合理，我通常只是看一眼，然后同意。
 
-四次迁移，四个当下，每个当下都有更适合的工具。这背后的规律是什么？
+我必须一直在场，却没有持续提供与这份注意力相称的判断。
 
-## 总命题
+表面上，我在监督 Agent；实际上，我只是它的时钟。它完成一轮，我按一下继续，这个任务才会进入下一轮。我的注意力就这样被切成许多碎片：每一次打断都很短，每一次决定都不难，但我始终不能真正离开，也很难把注意力完整地放到另一件事上。
 
-**每一代工具的形态，都不是设计品味的选择，而是对"当时模型参数下，人的注意力该花在哪"的精确适配。** 模型能力每上一个台阶，稀缺的判断就换一个位置，界面就围绕新的稀缺判断重组。
+这是一种很隐蔽的低效。衡量它，不能只看我点一次“继续”花了几秒。真正昂贵的是，为了随时接住下一轮，我必须让这个任务一直占据一部分注意力。
 
-还有一条贯穿的暗线：**每一代的"暴露问题"都是上一代成功制造的**。copy-paste 的摩擦只有在 chat 真的有用之后才存在；review 瓶颈只有在 agent 真的高产之后才存在。瓶颈不消失，只迁移。
+更关键的是，那些真正需要我判断的事情，大多不在每一轮结束时，而在任务开始之前：
 
-到第三、四代之间，还发生了一次容易被“CLI 对 GUI”的表面争论遮住的分工：
+- 我要的结果是什么；
+- 哪些事情可以做，哪些不能做；
+- 什么证据可以证明任务已经完成；
+- 遇到什么情况，Agent 必须停下来找我。
 
-> **Terminal 释放的是 Agent 的能力；Task workspace 管理的是人的注意力。**
+只要这些问题已经讲清楚，后面的实现路径、工具调用和轮次衔接，本来就应该由 Harness 自己完成。
 
-两者不是替代关系。Agent 仍然需要 shell、文件系统、Git、测试和进程这些接近 terminal 的
-行动底座；人则需要稳定地调度任务、理解进展、审查变更和做最终验收。模型从 sync 走向
-async 后，最好的 Agent execution surface 和最好的 human supervision surface 开始分离。
+这就是我为什么开始需要 Goal。
 
-下面按"朴素方案 → 暴露问题 → 下一修复"的链条走四代。
 
----
+## Goal 改变的不是运行时长，而是协作单位
 
-## 第一代：Chat + Ghost Text（2021-2023）——人是 context 搬运工
+Goal 很容易被理解成“让 Agent 自动多跑几轮”。但在我看来，它真正改变的不是一次运行有多长，而是人与 Agent 以什么为单位协作。
 
-**朴素方案**：模型给建议，人做一切其他事。两种形态：[GitHub Copilot](https://github.blog/news-insights/product-news/introducing-github-copilot-ai-pair-programmer/)（2021-06-29，官方定位 "AI pair programmer"，能力上限写明是"补全整行或整个函数"）的 ghost text，和 [ChatGPT](https://openai.com/index/chatgpt/)（2022-11-30）的 copy-paste 编程。
+我说的 Goal，是让 Harness 围绕一个目标和完成条件，自行接续中间的多个 turn。这里的异步也不只是把进程放到后台，而是人不必与 Agent 保持同一个节奏在线。
 
-**为什么这是当时的合理解**——有个很锋利的数字：Copilot 底层的 Codex 模型 [HumanEval pass@1 只有 28.8%](https://arxiv.org/abs/2107.03374)。再叠加有限上下文和缺少行动通道，直接形成三重约束：
+我把这种每轮结束都把控制权交还给人的交互称为同步 REPL。在这里，需要人介入的单位是 turn：Agent 做完一轮，人读完输出，再决定下一轮要不要开始。无论这个决定是否真的需要人的判断，任务能否继续都依赖人再次接棒。
 
-1. **上下文装不下工程现场**——模型看不到完整代码库，只能由人裁剪、搬运上下文。copy-paste 不是产品设计失误，而是系统边界的外显。
-2. **单步能力撑不起长链条**——HumanEval 的单函数通过率不能直接换算成真实任务的多步成功率，但它足以说明：当时还不能把连续修改与验证交给模型独立完成。[Grounded Copilot](https://arxiv.org/pdf/2206.15000) 对 20 名开发者的研究也观察到，探索性使用者会检查代码、执行测试、做静态分析并查阅文档；有参与者直接把自己的角色描述为 code reviewer。
-3. **没有行动通道**——没有工具调用、没有执行环境。
+Goal 把需要人介入和负责验收的单位，从 turn 改成了 task。人不再逐轮描述下一步，而是在开始时定义一份完成契约：目标是什么，边界在哪里，什么证据算完成。Harness 负责接住中间的 turn，持续推进，直到满足完成条件，或者遇到一个无法根据既有契约处理的新决定。
 
-Ghost text 是对这三个参数的精确适配：建议不够可靠 → 把"拒绝"的成本压到零（继续打字即忽略），把"接受"压到一个 Tab。**低命中率 × 低成本拒绝，是这组模型参数下非常合适的交互。**
+两种模式的区别不是“手动”与“自动”这么简单：
 
-**暴露问题**：[GPT-4 Technical Report](https://cdn.openai.com/papers/gpt-4.pdf) 报告 HumanEval 0-shot 67.0% 后，建议变得更值得采用，人肉搬运 context 的摩擦开始上升。2023 年一场 [HN 讨论](https://news.ycombinator.com/item?id=36211250)里，Aider 作者 Paul Gauthier 给出的建议很直接："Don't copy-and-paste between a chat session and your files"。瓶颈位置：**把模型接到工程现场**。
+```text
+同步 REPL：人持续在线，以 turn 为单位决定是否继续
 
-## 第二代：Cursor（2023-2025）——把模型搬进代码的主场
+Goal：      人可以离开，以 task 为单位定义和验收工作
+```
 
-**修复方案**：既然人不该做搬运工，就把模型嵌进 IDE，让它直接进入代码工作流。Cursor 在 2026 年回顾早期选择时写道，他们 [fork VS Code 而不是做扩展，是为了能够塑造自己的产品界面](https://cursor.com/blog/cursor-3)。这个决策在 2023 年很合理，因为**工作重心还在编辑器缓冲区里**：人仍是主要写码者，AI 的价值主要以贴着光标的交互（Tab、Cmd+K）交付。
+从 turn 到 task，人的工作也随之上移：从批准一个个行动，变成定义目标、行动边界与完成条件。
 
-**与模型跃迁的咬合**：2024-06-21 [Claude 3.5 Sonnet](https://www.anthropic.com/news/claude-3-5-sonnet) 发布；Anthropic 报告它在内部 agentic coding eval 中解决 64% 的任务。22 天后，Cursor 发布 [Composer beta](https://cursor.com/changelog/0-37-x)，把实验性的多文件编辑放进 IDE；2024-11-24 又上线了能自行选择 context、使用 terminal 的[早期 Agent](https://cursor.com/changelog/0-43-x)。模型开始能跨文件行动时，产品也从补全迅速转向编辑与执行。
+这才是异步协作真正开始的地方。我把任务交给 Harness，然后可以离开。它不再需要我为每一轮上发条；我也不再需要反复交出注意力，只为完成一连串几乎没有判断价值的“继续”。
 
-**暴露问题**：agent 承担越来越多实现后，编辑器不再天然是全部工作的中心。2025 年一场 HN 讨论里，有迁移者把选择归因于 Claude 的编码能力，并说 "[the interface isn't meaningful](https://news.ycombinator.com/item?id=45789738)"。Cursor 自己的产品变化更能说明问题：2025-08-07 发布 [CLI beta](https://forum.cursor.com/t/cursor-cli-beta-available-now/126964/)，2025-10-29 又在 [Cursor 2.0](https://cursor.com/blog/2-0) 中推出最多八个并行 Agent、worktree 隔离和集中 diff review。编辑器没有消失，但主界面开始为 Agent 协调重新分配空间。
 
-Michael Truell 在 [Lenny's Podcast](https://www.lennysnewsletter.com/p/the-rise-of-cursor-michael-truell) 里把方向描述为 "what comes after code"：编程会更多转向自然语言或伪代码，但专业开发者仍需要精确控制。这个判断解释了 Cursor 在 Agent 化的同时为何保留代码与 diff——也预告了第四代里 review 面板的位置。
+## 当人终于可以离开，注意力成了新的瓶颈
 
-## 第三代：Claude Code（2025）——agent 为主体，终端是它的自然居所
+但当 Goal 真的让我离开终端，另一个问题马上出现了。
 
-**修复方案**：既然主体换位了，就把界面从"人的写码环境"换成"agent 的行动环境"。前驱 [Aider](https://aider.chat/) 至少在 2023 年 6 月就以 "AI pair programming in your terminal" 为定位，并把 [Git 纳入工作流](https://aider.chat/docs/git.html)。2025-02-24，[Claude Code](https://www.anthropic.com/news/claude-3-7-sonnet) 在 limited research preview 中更明确地把 terminal 变成委托工程任务的入口：它可以搜索和读取代码、编辑文件、运行测试并操作 Git。
+既然一个任务可以自己向前走，我就可以同时交代更多任务。过去，我的工作容量受限于一次能为几个 Agent 逐轮接棒；现在，Agent 可以各自运行，限制不再来自它们能否继续，而来自我回来后能否有效地管理它们。
 
-Boris Cherny 的设计哲学原话（[Latent Space 播客](https://www.latent.space/p/claude-code)）："It's **raw access to the model**... we literally could not build anything more minimal"、"we think of it as a **Unix utility**"。这套取舍让强模型的能力以更少产品层包装直接暴露，也保留了与其他工具组合的空间。
+我需要知道：
 
-终端形态天然支持**可组合**：管道、`-p` headless、CI 与脚本化；配合 terminal multiplexer 和 Git worktree，又能低成本扩展到并行 session。行业在四个月内连续出现同类入口：Claude Code（2025-02）→ [OpenAI Codex CLI（2025-04）](https://openai.com/index/introducing-upgrades-to-codex/) → [Gemini CLI（2025-06-25）](https://blog.google/innovation-and-ai/technology/developers-tools/introducing-gemini-cli-open-source-ai-agent/)。
+- 哪些任务正在进行；
+- 哪个任务遇到了真正需要我的问题；
+- 哪个任务已经完成；
+- 我回来时应该先读什么；
+- 每个任务改变了什么；
+- 凭什么判断它真的完成了。
 
-但这里的“并行”首先是执行能力：程序员可以打开更多 terminal，让更多 Agent 同时行动。
+这时，Goal 与 task management 的区别变得很清楚：
 
-**暴露问题**——我的体感有两层，也都能找到外部证据：
+> Goal 解决“一个任务能不能在我离开后继续”；task management 解决“当多个任务都能独立工作时，我的注意力应该去哪”。
 
-- **物理层**：终端滚动跳动、流式输出覆盖手动回滚、阅读被生成打断。Claude Code 官方 repo 中一个 [2026-03-16 创建的 issue](https://github.com/anthropics/claude-code/issues/34845) 精确记录了这两种现象：随机跳回顶部，以及生成期间自动滚动覆盖用户手动回看。
-- **认知层**：GitLab 在 2026 年 6 月发布的一项[覆盖六国 1,528 名开发者与技术采购者的调查](https://about.gitlab.com/press/releases/2026-06-23-gitlab-research-reveals-organizations-are-generating-ai-code-faster-than-they-can-control-it/)中，85% 的受访者同意 AI 已把瓶颈从写代码移到 review 与 validation。Addy Osmani 的表述几乎和体感逐字一致："[The bottleneck is no longer how fast you write code, it is how fast a trusted human can be confident in a review](https://addyosmani.com/blog/agentic-code-review/)"。同步 REPL 把人绑在 turn-taking 上，而其中很多 turn 只是确认继续。
+这里的 task management 不是排期，也不是给任务列一张待办清单。它管理的是已经委托出去、正在执行、等待人介入或者等待验收的工作。表面上管理的是 task，实际管理的是人的注意力何时离开、又因为什么回来。
 
-这个裂缝的结构值得看清：**终端赢在"agent 的行动效率"，输在"人的阅读效率"**。当模型生成速度越过人的 review 速度，界面的服务对象就该从 agent 换回人——但服务的不再是人的"写"，而是人的"读与判断"。
+Goal 让单个任务可以异步推进；task management 则决定人的注意力如何在多个任务之间分配。这是第二次上移：第一次从逐轮接棒到定义 Goal，第二次从定义单个 Goal 到管理多个 task。
 
-## 第四代：Codex App（2025-2026）——执行仍在终端，界面转向人的 read 与 review
+```text
+逐轮接棒
+   ↓
+定义 Goal
+   ↓
+管理多个 task
+```
 
-**修复方案**：不是把 Agent 从 terminal 迁走，而是在保留 shell、代码库、测试与 Git 这套 Agent 行动环境的同时，为人补上一层以 task 为中心的 read/review 界面。OpenAI Codex 的路径：2025-05-16 [云端 agent](https://openai.com/index/introducing-codex/)（沙箱、并行、PR 出口）→ 2025-09-15 [多 surface 收敛](https://openai.com/index/introducing-upgrades-to-codex/)→ 2026-02-02 [macOS 桌面 app](https://openai.com/index/introducing-the-codex-app/)。官方现在把桌面形态描述为支持 [parallel project chats、内建 Git review 与 worktrees](https://learn.chatgpt.com/docs/whats-new#the-codex-app-launches-on-macos) 的工作区。
+到这里，我才重新看懂 Claude Code 与 Codex 的差别：它们的区别不只是一个在 CLI、一个在 app，而是各自围绕先后出现的两个瓶颈组织交互。
 
-我体验到的关键结构是：**左侧任务列表（并行 session）+ 中央对话/任务流 + 右侧可收起的 diff review 面板**。其他 agent 产品也在向并行 session、隔离执行和集中 review 靠拢；这里重要的不是“三栏布局”本身，而是 execution plane 与 human control plane 开始分离：Agent 仍以命令和工具调用推进工作，人却不必再从持续滚动的 terminal session 中重建发生了什么，而是围绕一个个 task 阅读过程、检查 diff 并验收结果。**Agent 的行动单位仍可以是 command 和 turn，人的监督单位才从 turn 上升为 task。**
+## Claude Code 解决了 Agent 的行动瓶颈
 
-为什么三件套是对的？它做的正是关注点分离，本质是**三种注意力模式各给一个专属区域**：
+我的不适不是因为 Claude Code 没有解决问题，而是因为它成功解决的是执行层的问题：如何让 Agent 直接、高效地使用 shell、代码库、Git、测试和各种真实开发工具。
 
-- **左侧 = 调度注意力**（我有哪些任务在飞、哪个要我了）——扫一眼的模式；
-- **中央 = 理解注意力**（这个任务的意图、进展、agent 的说明）——沉浸阅读的模式，所以必须是稳定的对话流，不能被生成跳动打断，这正是 terminal REPL 给不了的；
-- **右侧 = 验收注意力**（这次改动能不能过）——按需打开的模式，所以可收起。而且它是**任务 scoped 的 diff**，不是代码仓浏览器——review 的单位跟着任务走，不是跟着文件树走。
+当模型刚刚能够从“给出代码建议”走向“自己完成工程行动”时，最重要的是减少它与真实工作环境之间的阻隔。终端足够薄，离工具足够近，也天然可组合。模型可以搜索、编辑、运行、检查，程序员也可以随时看见和介入。
 
-心流的来源就在这：三种模式不再互相打断。
+Claude Code 优先展开的是 Agent 的行动过程。它的中心是一段持续向前的 session：Agent 读到了什么、调用了什么工具、产生了什么结果、下一步准备做什么。在 Agent 还需要密切协作时，行动过程就是最重要的信息，人在旁边也能及时修正方向。
 
----
+但当 Agent 已经可以独立完成越来越长的工作，这个优点会逐渐变成新的摩擦。Agent 的执行流仍然需要 command 和 turn，人却不再需要观看每一个 command、接住每一个 turn。终端仍然很适合 Agent 行动，却不一定适合人管理许多正在异步推进的任务。
 
-## 底层结构：四次迁移其实是一张表
+所以这不是 CLI 和 GUI 的胜负。CLI 是很好的 Agent execution surface，却未必是最好的 human supervision surface。当执行层已经足够强，人开始需要一层为监督而设计的交互。
 
-| 代际 | 稀缺的判断 | 界面围绕谁建 | 人的角色 | 交互单位 |
-|---|---|---|---|---|
-| Chat/补全 | 写什么代码 | 代码（编辑器缓冲区） | 作者 | 一次建议 |
-| Cursor | 怎么改这批文件 | 代码 + 光标 | 作者 + 采纳者 | 一次编辑 |
-| Claude Code | 批不批这个行动 | agent 的行动流 | 同步监督者 | 一个 turn |
-| Codex app | 先处理、验收哪个任务 | 人的注意力 | 调度者 + 验收者 | 一个 task |
 
-## 三条可以带走的洞察
+## Codex 围绕人的注意力重新组织交互
 
-**1. 本质需求从来没变过：让人的恒定注意力对准当前最稀缺的判断。** 变的只是稀缺判断的位置。所以判断"下一代工具长什么样"的方法不是看 UI 趋势，而是问：*当前这代模型参数下，人做的事情里哪一件最不该由人做？* 第一代是搬 context，第二代是手改多文件，第三代是接 turn。
+从 Claude Code 转到 Codex app 时，我的第一反应是：这才是我现在需要的工具。我也开始理解，为什么一部分 Claude Code 重度用户会在这个阶段需要 Codex 式的工具。
 
-**2. 主体换位决定界面语言。** 代码为主体 → 界面是编辑器；agent 行动为主体 → 界面是终端/对话；人的 read/review 为主体 → 控制界面围绕任务组织。第四代没有替换 Agent 的终端行动面，而是在它上面增加了 task management；对话也没有消失，而是成为 task 的过程记录，不再是人组织工作的顶层单位。这也解释了 Plan / Default / Goal 的位置：它们不是三个零散功能，而是在 task 生命周期中选择人、模型与 harness 如何分配控制权。
+差别不只是 GUI 更漂亮。Claude Code 优先展开 Agent 的行动过程；Codex 则把 task 放在交互中心，优先组织人的监督过程。正因为前者已经释放了 Agent 的行动能力，人的逐轮陪伴才会暴露为新的瓶颈；Codex 接住的正是这个需求。
 
-**3. 下一次迁移已经能看见了：瓶颈正在从 review 挪向信任的工程化。** LinearB 的 2026 benchmark 基于 8.1M+ 个 PR，报告 [AI PR 等待 review 的时间是普通 PR 的 4.6 倍](https://linearb.io/resources/software-engineering-benchmarks-report)；OpenAI 则报告，2026 年 6 月其内部日活用户的 99 分位已经能在一天内产生 [60+ 小时、分布在多个并行 Agent 上的 Codex agent turns](https://openai.com/index/how-agents-are-transforming-work/)。两组口径不同，却共同说明人时和机时正在解耦，人的验收吞吐会成为硬上限。行业开始让 Agent 参与 review，但这只是把 review 队列压扁一层，真正的解要回答"人凭什么信"——也就是**验证的工程化：eval、合约、可机检的验收标准**。第五代工具的三件套里，右侧那块 diff 面板大概率会被"证据面板"取代：不是只给你看改了什么，而是给你看凭什么可信。
+Agent 的行动单位仍然可以是 command 和 turn，但人的管理单位已经变成了 task。人不必持续跟随执行流，而可以围绕任务进行调度、理解和验收。
 
-我现在更愿意把这条演进压成两句话：
+Codex 的几个区域，对应的其实是几种不同的注意力：
 
-> Terminal-first 让 Agent 充分行动；task-first 为人组织阅读、调度与验收。
->
-> 当人的主要工作从写代码、接 turn 转向 read/review，Harness 必须在 Agent 的 execution plane 之上建立 task control plane。
+- **任务列表负责调度**：现在有哪些工作在进行，哪个任务需要我；
+- **任务流负责理解**：这个任务的目标是什么，过程中发生了什么；
+- **diff 负责验收**：这次任务具体改变了什么；
+- **状态与通知负责召回**：什么时候真的需要我回来。
+
+这些能力单独看都不神秘，放在一起却改变了人与 Agent 的关系。它不要求我持续观看 Agent 工作，而是让我的注意力只在任务边界上出现：开始时定义，必要时决策，结束时验收。
+
+任务列表也不只是多个 chat 的目录。Chat 保存的是一段对话，task 还应该具有目标、状态、改动、证据和完成条件。对话只是任务的过程记录，不再是组织工作的最上层单位。
+
+这就是 Codex 在我当前工作方式下做对的地方。它没有取代 Agent 的执行层，而是在执行层之上，为人建立了一层 task management。它也让我看见，自己的 Harness 在 Goal 之后仍然缺什么。
+
+
+## Goal 之后，我的 Harness 还需要任务管理
+
+我的 Harness 也停留在 REPL。实现 Goal 之后，它已经能够替人接住中间的 turn，让一个任务持续推进。但现在我知道，Goal 只是完成了从同步执行到异步执行的第一步。
+
+落到我的 Harness 上，这个差别很具体：Goal 让任务不再依赖人的逐轮接棒；task management 才让人的注意力不再被执行过程占住。
+
+如果 Harness 可以同时承载更多异步任务，它接下来需要的就不只是一个输入框和一段更长的执行记录，而是一套围绕人组织的任务界面：持久的任务状态、明确的等待原因、只在必要时发生的召回、task-scoped 的改动与证据，以及可以被快速完成的最终验收。
+
+Agent 仍然需要 shell、文件系统、Git 和测试。它的 execution surface 不必离开终端式的行动环境。但人的 control surface 应该围绕 task 建立，因为人已经不再以 command 和 turn 为单位工作。
+
+这就是我现在知道的、更好的 Harness 用户体验：不是在 REPL 里容纳更多 session，而是让每个 task 都可以独立推进，只在真正需要判断时把人的注意力召回。
+
+我既经历了交互瓶颈，也实现过试图解除这个瓶颈的机制。因此，我看到的不只是两个产品的界面差异，而是人与 Agent 的协作单位正在发生变化。
+
+对我来说，亲自构建 Harness 不只是实现一套功能，也是理解技术趋势的方法：先在使用中感到摩擦，再把摩擦拆成机制，用代码和 Dogfood 验证，最后回到产品形态判断它是不是结构性变化。
+
+这条从体验、实现再回到产品的路径，也改变了我判断 coding 工具的尺度。
+
+
+## 效率工具最终管理的是人的注意力
+
+这个尺度很具体：我不再只看一个 coding 工具让 Agent 做得有多快，也会看它要求人以什么节奏参与：
+
+- 它是在每一个 turn 结束时把人叫回来，还是只在真的需要判断时召回人？
+- 它展示的是完整的行动流水，还是为人组织过的任务状态与完成证据？
+- 它让人同时盯住更多 session，还是让人可以放心地忘记正在执行的任务？
+- 它优化的是 Agent 的吞吐，还是人与多个 Agent 协作时的注意力质量？
+
+效率工具很容易优化可见的操作：少一次点击、少敲一条命令、快几秒得到回答。但人的注意力并不是由许多可以随意切割的秒组成的。一次只需点击“继续”的打断，也可能破坏一段完整的思考。
+
+真正好的异步 Agent 工具，不是让人更快地回应每一次打断，而是让那些不需要人的时刻，不再打断人。
+
+Agent 不会行动时，工具应该帮助它行动；Agent 已经可以连续行动时，工具就应该帮助人分配注意力。瓶颈在哪，交互重心就在哪。
