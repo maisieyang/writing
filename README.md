@@ -1,14 +1,12 @@
-# 构建 Agent Harness
+<p class="project-intro">
+  Hi，我是 Maisie。我在公开构建 <strong>Agent Harness</strong>
+  <a class="github-project-link" href="https://github.com/maisieyang/open-harness" aria-label="OpenHarness on GitHub" title="OpenHarness on GitHub"><svg class="svg-icon" aria-hidden="true"><use xlink:href="{{ '/assets/minima-social-icons.svg#github' | relative_url }}"></use></svg></a>。
+</p>
 
-Hi，我是 Maisie。我在公开构建 **Agent Harness**：
-[github.com/maisieyang/open-harness](https://github.com/maisieyang/open-harness)。
-
-*我构建 Agent Runtime，让模型能力转化为可靠执行；也在探索当 Agent 可以连续工作时，
+*我构建模型周围的系统，让模型能力转化为可靠执行。也在探索当 Agent 可以连续工作，
 工具如何围绕人的注意力重新组织交互。*
 
-正在寻找 Agent Harness / Coding Agent 工程机会 · [yangxiyuebupt@gmail.com](mailto:yangxiyuebupt@gmail.com)
-
----
+Open to Agent Harness / Coding Agent engineering roles · [Email](mailto:yangxiyuebupt@gmail.com)
 
 ## 我关注的问题
 

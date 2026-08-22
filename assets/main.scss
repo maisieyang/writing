@@ -4,19 +4,16 @@
 @import "minima";
 
 .site-header__inner {
-  display: grid;
-  grid-template-areas:
-    "title nav"
-    "description nav";
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: 32px;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  min-height: 55px;
 }
 
 .site-title {
-  grid-area: title;
   float: none;
-  padding-top: 12px;
+  padding: 0;
   line-height: 1.35;
 }
 
@@ -29,19 +26,20 @@
 }
 
 .site-nav {
-  grid-area: nav;
+  display: flex;
+  align-items: center;
   position: static;
   float: none;
   border: 0;
   background: transparent;
-  line-height: 1;
+  line-height: 1.35;
 }
 
 .site-nav .page-link {
   display: inline-block;
   margin: 0 !important;
   padding: 8px 0 8px 16px;
-  line-height: 1.5;
+  line-height: 1.35;
 }
 
 .site-nav .page-link[aria-current="page"] {
@@ -53,17 +51,37 @@
   color: $grey-color;
 }
 
+.project-intro {
+  margin-bottom: 15px;
+}
+
+.github-project-link {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 3px;
+  color: $text-color;
+  vertical-align: -0.12em;
+}
+
+.github-project-link:hover {
+  color: $brand-color;
+}
+
+.github-project-link .svg-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.home > h2:first-of-type {
+  margin-top: 42px;
+}
+
 @media screen and (max-width: 600px) {
   .site-header__inner {
-    grid-template-areas:
-      "title nav"
-      "description description";
-    grid-template-columns: minmax(0, 1fr) auto;
-    column-gap: 16px;
+    gap: 16px;
   }
 
   .site-title {
-    padding-top: 10px;
     font-size: 20px;
   }
 
