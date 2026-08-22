@@ -2,8 +2,9 @@
   Hi，我是 Maisie。我在公开构建：
   <a class="github-project-link" href="https://github.com/maisieyang/open-harness" aria-label="OpenHarness on GitHub" title="OpenHarness on GitHub"><svg class="svg-icon" aria-hidden="true"><use xlink:href="{{ '/assets/minima-social-icons.svg#github' | relative_url }}"></use></svg><span>OpenHarness</span></a>。
 </p>
-我从零实现了Agent Runtime、Context Management、Goal、Permission / Sandbox 与 Plugin 扩展。
-正在寻找 Agent Harness 与 Coding Agent 系统方向的工程机会 · Email：[yangxiyuebupt@gmail.com](mailto:yangxiyuebupt@gmail.com)
+我构建模型周围的系统，让模型能力转化为可靠执行。
+我实现了Agent Runtime、Context Management、Goal、Permission / Sandbox 与 Plugin 扩展。
+目前正在寻找 Agent Harness 与 Coding Agent 系统方向的工程机会。 Email：[yangxiyuebupt@gmail.com](mailto:yangxiyuebupt@gmail.com)
 
 ## 研究与实践
 
