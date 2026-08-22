@@ -1,13 +1,22 @@
 <p class="project-intro">
-  Hi，我是 Maisie。我在公开构建：
-  <a class="github-project-link" href="https://github.com/maisieyang/open-harness" aria-label="OpenHarness on GitHub" title="OpenHarness on GitHub"><svg class="svg-icon" aria-hidden="true"><use xlink:href="{{ '/assets/minima-social-icons.svg#github' | relative_url }}"></use></svg><span>OpenHarness</span></a>。
+  Hi，我是 Maisie。我在公开构建 Agent Harness。
 </p>
-<p>我构建模型周围的系统，让模型能力转化为可靠执行。</p>
-<p>我实现了Agent Runtime、Context Management、Goal、Permission / Sandbox 与 Plugin 扩展。</p>
-<p>目前正在寻找 Agent Harness、Coding Agent，以及更广泛的 Agent 工程方向的机会。</p>
-<a href="mailto:maisieyang@outlook.com">maisieyang@outlook.com</a>
 
-## 研究与实践
+## Current Work | 当前构建
+
+<p>
+  <a class="github-project-link" href="https://github.com/maisieyang/open-harness" aria-label="OpenHarness on GitHub" title="OpenHarness on GitHub"><svg class="svg-icon" aria-hidden="true"><use xlink:href="{{ '/assets/minima-social-icons.svg#github' | relative_url }}"></use></svg><span>OpenHarness</span></a> — 一个从零用 Python 构建、本地优先的 Coding Agent Harness。
+</p>
+
+我构建模型周围的系统，让模型能力转化为可靠执行。
+
+## Focus | 关注方向
+
+**Engineering | 工程：** Agent Harness · Agent Runtime · Reliable Execution
+
+**Exploring | 探索：** 当 Agent 可以连续工作，工具如何围绕人的注意力重新组织交互。
+
+## Writing | 写作
 
 ### 1. [Content Management：如何为 Coding Agent 管理有限注意力](./content-management.md)
 
@@ -44,3 +53,7 @@ Codex 则围绕人的调度、理解和验收重新组织交互。
 
 从 Claude Code、统一 Harness、MCP、Plugin 和 Skill 出发，分析 Anthropic
 如何把持续变强的模型接入高价值工作流。
+
+## Contact | 联系我
+
+目前正在寻找 Agent Harness、Coding Agent，以及更广泛的 Agent 工程方向的机会 · <a href="mailto:maisieyang@outlook.com">maisieyang@outlook.com</a>
