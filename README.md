@@ -2,19 +2,13 @@
   Hi，我是 Maisie。我在公开构建 Agent Harness。
 </p>
 
-## Current Work | 当前构建
-
 <p>
-  <a class="github-project-link" href="https://github.com/maisieyang/open-harness" aria-label="OpenHarness on GitHub" title="OpenHarness on GitHub"><svg class="svg-icon" aria-hidden="true"><use xlink:href="{{ '/assets/minima-social-icons.svg#github' | relative_url }}"></use></svg><span>OpenHarness</span></a> — 一个从零用 Python 构建、本地优先的 Coding Agent Harness。
+  这是我的作品： <a class="github-project-link" href="https://github.com/maisieyang/open-harness" aria-label="OpenHarness on GitHub" title="OpenHarness on GitHub"><svg class="svg-icon" aria-hidden="true"><use xlink:href="{{ '/assets/minima-social-icons.svg#github' | relative_url }}"></use></svg><span>OpenHarness</span></a>。一个从零用 Python 构建、本地优先的 Coding Agent Harness。我构建模型周围的系统，让模型能力转化为可靠执行，重点关注 Agent Harness、Agent Runtime 与 Reliable Execution。
 </p>
 
-我构建模型周围的系统，让模型能力转化为可靠执行。
-
-## Focus | 关注方向
-
-**Engineering | 工程：** Agent Harness · Agent Runtime · Reliable Execution
-
-**Exploring | 探索：** 当 Agent 可以连续工作，工具如何围绕人的注意力重新组织交互。
+<p>
+  我也在探索：当 Agent 可以连续工作，工具如何围绕人的注意力重新组织交互。
+</p>
 
 ## Writing | 写作
 
@@ -56,4 +50,4 @@ Codex 则围绕人的调度、理解和验收重新组织交互。
 
 ## Contact | 联系我
 
-目前正在寻找 Agent Harness、Coding Agent，以及更广泛的 Agent 工程方向的机会 · <a href="mailto:maisieyang@outlook.com">maisieyang@outlook.com</a>
+目前正在寻找 Agent Harness、Coding Agent以及更广泛的 Agent 工程方向的机会 · <a href="mailto:maisieyang@outlook.com">maisieyang@outlook.com</a>
