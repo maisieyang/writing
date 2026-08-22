@@ -1,27 +1,14 @@
 # 构建 Agent Harness
 
-> 让模型能力转化为可靠执行，并探索当 Agent 可以连续工作，工具如何围绕人的注意力重新组织交互。
+Hi，我是 Maisie。我在公开构建 **Agent Harness**：
+[github.com/maisieyang/open-harness](https://github.com/maisieyang/open-harness)。
 
-Hi，我是 Maisie。我在公开构建 **Agent Harness**。
-
-我主要构建 Agent Runtime，并持续完善 Context Management、Goal、
-Permission / Sandbox 和 Plugin。
-
-我实现了 Goal：人定义目标、作出关键决策并验收结果，
-Harness 接管中间的持续推进。
-
-这也让我看到下一阶段的产品方向：当任务可以异步推进，
-人的注意力会成为新的瓶颈，工具的交互重心也将从 Agent 的执行过程，
-转向人的任务管理。
-
-以下文章记录我如何实现和验证这些能力，
-以及由此形成的工程与产品判断。
-
-[查看 OpenHarness →](https://github.com/maisieyang/open-harness)
+*我构建 Agent Runtime，让模型能力转化为可靠执行；也在探索当 Agent 可以连续工作时，
+工具如何围绕人的注意力重新组织交互。*
 
 ---
 
-## 从这里开始
+## 我关注的问题
 
 ### 1. [Content Management：如何为 Coding Agent 管理有限注意力](./content-management.md)
 

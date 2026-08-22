@@ -4,7 +4,9 @@
       {{ site.title | escape }}
     </a>
 
-    <p class="site-description">{{ site.description | escape }}</p>
+    {% if site.description %}
+      <p class="site-description">{{ site.description | escape }}</p>
+    {% endif %}
 
     <nav class="site-nav" aria-label="主导航">
       <a
