@@ -6,6 +6,8 @@ Hi，我是 Maisie。我在公开构建 **Agent Harness**：
 *我构建 Agent Runtime，让模型能力转化为可靠执行；也在探索当 Agent 可以连续工作时，
 工具如何围绕人的注意力重新组织交互。*
 
+正在寻找 Agent Harness / Coding Agent 工程机会 · [yangxiyuebupt@gmail.com](mailto:yangxiyuebupt@gmail.com)
+
 ---
 
 ## 我关注的问题
