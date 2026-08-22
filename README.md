@@ -4,7 +4,8 @@
 </p>
 <p>我构建模型周围的系统，让模型能力转化为可靠执行。</p>
 <p>我实现了Agent Runtime、Context Management、Goal、Permission / Sandbox 与 Plugin 扩展。</p>
-<p>目前正在寻找 Agent Harness 与 Coding Agent 系统方向的工程机会。 Email：<a href="mailto:yangxiyuebupt@gmail.com">yangxiyuebupt@gmail.com</a></p>
+<p>目前正在寻找 Agent Harness、Coding Agent，以及更广泛的 Agent 工程方向的机会。</p>
+<a href="mailto:maisieyang@outlook.com">maisieyang@outlook.com</a>
 
 ## 研究与实践
 
