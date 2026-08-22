@@ -3,7 +3,7 @@
   <a class="github-project-link" href="https://github.com/maisieyang/open-harness" aria-label="OpenHarness on GitHub" title="OpenHarness on GitHub"><svg class="svg-icon" aria-hidden="true"><use xlink:href="{{ '/assets/minima-social-icons.svg#github' | relative_url }}"></use></svg><span>OpenHarness</span></a>。
 </p>
 
-正在寻找 Agent Harness 与 Coding Agent 系统方向的工程机会 · [联系我](mailto:yangxiyuebupt@gmail.com)
+正在寻找 Agent Harness 与 Coding Agent 系统方向的工程机会 · Email：[yangxiyuebupt@gmail.com](mailto:yangxiyuebupt@gmail.com)
 
 ## 我关注的问题
 
