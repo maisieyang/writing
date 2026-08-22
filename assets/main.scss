@@ -58,8 +58,11 @@
 .github-project-link {
   display: inline-flex;
   align-items: center;
+  gap: 5px;
   margin-left: 3px;
   color: $text-color;
+  font-weight: 600;
+  white-space: nowrap;
   vertical-align: -0.12em;
 }
 
@@ -70,6 +73,7 @@
 .github-project-link .svg-icon {
   width: 18px;
   height: 18px;
+  fill: currentColor;
 }
 
 .home > h2:first-of-type {
