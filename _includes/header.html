@@ -8,10 +8,8 @@
       <p class="site-description">{{ site.description | escape }}</p>
     {% endif %}
 
-    {% unless page.url == "/" %}
-      <nav class="site-nav" aria-label="主导航">
-        <a class="page-link" href="{{ "/" | relative_url }}">首页</a>
-      </nav>
-    {% endunless %}
+    <nav class="site-contact-links" aria-label="联系和社交链接">
+      {% include contact-links.html %}
+    </nav>
   </div>
 </header>
