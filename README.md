@@ -13,8 +13,6 @@
   <p class="project-focus">
     我的核心工作集中在 Agent Runtime，包括 Content Management、
     Default / Plan / Goal 三种工作模式、Agent Interaction，以及 Eval。
-    这些工作分别回答模型当前应该看见什么、在不同模式下可以采取什么行动、
-    任务何时继续或停止、人何时需要介入，以及如何验证结果。
   </p>
 
   <div class="project-proof" aria-label="OpenHarness 验证数据">
