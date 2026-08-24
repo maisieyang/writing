@@ -73,21 +73,14 @@ a:hover {
   border-color: $site-border-color;
 }
 
-.footer-cta {
-  max-width: 740px;
-}
-
-.footer-cta__copy {
-  margin: 0;
-  font-size: 17px;
-  line-height: 1.65;
-}
-
 .footer-links {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 4px;
-  margin-top: 8px;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .footer-links a {
@@ -105,7 +98,12 @@ a:hover {
   color: $site-muted-color;
 }
 
-.home {
+.footer-links .footer-links__label {
+  margin-right: 2px;
+}
+
+.prose {
+  color: $text-color;
   font-size: 17px;
   line-height: 1.65;
 }
@@ -227,11 +225,6 @@ a:hover {
   color: $site-muted-color;
   font-size: 18px;
   line-height: 1.7;
-}
-
-.post-content {
-  font-size: 17px;
-  line-height: 1.72;
 }
 
 .post-content h2 {
@@ -397,7 +390,7 @@ a:hover {
     text-align: right;
   }
 
-  .home {
+  .prose {
     font-size: 16px;
     line-height: 1.6;
   }
@@ -433,9 +426,5 @@ a:hover {
   .site-footer {
     margin-top: 24px;
     padding-top: 20px;
-  }
-
-  .footer-cta__copy {
-    font-size: 16px;
   }
 }
