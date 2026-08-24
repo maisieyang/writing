@@ -1,53 +1,75 @@
 <p class="project-intro">
-  Hi，我是 Maisie。我在公开构建 Agent Harness。
+  Hi，我是 Maisie，一名有近 8 年前端与全栈经验、现专注 Coding Agent
+  的产品工程师。我曾参与企业效率工具和复杂业务系统研发，过去两年持续投入
+  LLM 与 Agent，目前正在独立构建
+  <a class="github-project-link" href="https://github.com/maisieyang/open-harness" aria-label="OpenHarness on GitHub" title="OpenHarness on GitHub"><svg class="svg-icon" aria-hidden="true"><use xlink:href="{{ '/assets/minima-social-icons.svg#github' | relative_url }}"></use></svg><span>OpenHarness</span></a>。
+</p>
+<p>OpenHarness 是一个用 Python 从零实现、持续 Dogfood 的 local-first Coding Agent Harness。</p>
+<p>我的核心工作集中在 Agent Runtime，包括 Content Management、
+  Default / Plan / Goal 三种工作模式、Agent Interaction，以及 Eval。
+  这些工作分别回答模型当前应该看见什么、在不同模式下可以采取什么行动、
+  任务何时继续或停止、人何时需要介入，以及如何验证结果。
 </p>
 
 <p>
-  这是我的作品： <a class="github-project-link" href="https://github.com/maisieyang/open-harness" aria-label="OpenHarness on GitHub" title="OpenHarness on GitHub"><svg class="svg-icon" aria-hidden="true"><use xlink:href="{{ '/assets/minima-social-icons.svg#github' | relative_url }}"></use></svg><span>OpenHarness</span></a>。一个从零用 Python 构建、本地优先的 Coding Agent Harness。我构建模型周围的系统，让模型能力转化为可靠执行，重点关注 Agent Harness、Agent Runtime 与 Reliable Execution。
+  截至 2026-08-22，OpenHarness 有 2,791 个稳定测试，stable-core coverage
+  为 95.06%；9 份 Eval contract、6 / 6 replay gates；
+  SWE-bench Lite 基线为 170 / 300。
 </p>
 
-<p>
-  我也在探索：当 Agent 可以连续工作，工具如何围绕人的注意力重新组织交互。
+<p class="job-search">
+  我目前正在寻找 Coding Agent、Agent Runtime、Agent 产品研发或 AI 全栈方向的工程职位。
+  如果你们正在构建面向真实用户的 Agent，欢迎联系：
+  <a href="mailto:maisieyang@outlook.com">maisieyang@outlook.com</a>
 </p>
 
-## Writing | 写作
+## Engineering Notes | 工程实践
 
-### 1. [Content Management：如何为 Coding Agent 管理有限注意力](./content-management.md)
+以下文章来自我持续构建、使用和验证 OpenHarness 时遇到的真实工程问题。
 
-**模型下一次推理究竟应该看见什么？**
-
-Context 不是记忆，而是 Harness 为每次推理编译的 Working Set。它必须持续选择、
-限流、压缩和重建信息与能力。
-
-### 2. [我实现了 `/goal`，但人还是不能离开](./goal-external-completion.md)
+### [我实现了 `/goal`，但人还是不能离开](./goal-external-completion.md)
 
 **一个任务怎样在无人实时看守时持续推进，又不越过人的授权？**
 
-Goal 让 Harness 自己接续每一轮；Permission 和 Sandbox 限制它能做什么、
-实际能影响什么；真正需要人的决定则被保存，等待人回来处理。
+我在 OpenHarness 中实现了 Goal Contract、Goal Controller 与独立 Judge，
+让任务根据执行证据继续、完成或暂停；随后又将 Permission、Seatbelt / Docker
+Sandbox 接入同一条控制路径，处理人离场后的授权与执行边界。
 
-### 3. [一个 Coding Agent，到底应该怎么验证？](./agent-eval-demystified.md)
+### [Content Management：如何为 Coding Agent 管理有限注意力](./content-management.md)
 
-**我们凭什么相信 Agent 真的有效？**
+**模型下一次推理究竟应该看见什么？**
 
-TDD 锁定确定性机制，Eval 管理模型决策，Dogfood 与真实使用验证产品价值，
-公共 Benchmark 补充一份有限的端到端证据。
+我把 Context 实现为 Harness 持续编译的 Working Set：组装 System Prompt 与
+Tool Catalog，限制 Tool Result 增长，清理和压缩历史，并通过 Project Memory、Resume 管理跨 Session 的知识和状态。
 
-### 4. [瓶颈在哪，交互重心就在哪](./coding-tools-evolution.md)
+### [一个 Coding Agent，到底应该怎么验证？](./agent-eval-demystified.md)
 
-**当 Agent 可以连续工作，交互重心为什么会从 REPL 走向 Task Management？**
+**当模型参与系统决策，我们凭什么相信 Agent 真的有效？**
 
-Claude Code 释放 Agent 的行动能力，Goal 让单个任务可以异步推进；
-Codex 则围绕人的调度、理解和验收重新组织交互。
-当执行不再需要逐轮接棒，协作单位也从 turn 上移到 task。
+我将验证拆成确定性的机制测试、模型参与的 Capability Eval、完整产品 Dogfood
+和公共 Benchmark；并为 Eval 建立 Live、Record、Replay 与明确的证据有效边界。
 
-### 5. [拆解 Anthropic 的产品逻辑](./anthropic-product-logic.md)
+## Product & Industry | 产品与行业
+
+这些文章把 OpenHarness 中遇到的问题放回更广泛的产品与行业变化中观察。
+
+### [瓶颈在哪，交互重心就在哪](./coding-tools-evolution.md)
+
+**当 Agent 可以连续工作，交互为什么会从 REPL 走向 Task Management？**
+
+结合我对 Claude Code、Codex 的深度使用，以及在 OpenHarness 中实现 Goal
+的经验，分析人的职责如何从逐轮推动执行，上移到定义目标、分配注意力和验收结果。
+
+### [拆解 Anthropic 的产品逻辑](./anthropic-product-logic.md)
 
 **为什么 Harness 可能成为 AI 产品的战略层？**
 
-从 Claude Code、统一 Harness、MCP、Plugin 和 Skill 出发，分析 Anthropic
-如何把持续变强的模型接入高价值工作流。
+从 Claude Code 的演化、统一 Harness、MCP、Plugin 和 Skill 出发，分析
+Anthropic 如何把持续变强的模型接入高价值工作流，并争夺企业工作的智能入口。
 
-## Contact | 联系我
+---
 
-目前正在寻找 Agent Harness、Coding Agent以及更广泛的 Agent 工程方向的机会 · <a href="mailto:maisieyang@outlook.com">maisieyang@outlook.com</a>
+如果你们正在构建面向真实用户的 Agent 产品，
+欢迎通过 [maisieyang@outlook.com](mailto:maisieyang@outlook.com) 联系我。
+
+[GitHub](https://github.com/maisieyang) · [X](https://x.com/maisieyangyang)
