@@ -1,0 +1,41 @@
+{% assign article_pages = site.pages | where: "article_nav", true | sort: "article_order" %}
+
+<aside class="article-nav">
+  <nav aria-label="文章列表">
+    <p class="article-nav__title">文章</p>
+
+    <div class="article-nav__group">
+      <p class="article-nav__label">工程实践</p>
+      <ul class="article-nav__list">
+        {% for article in article_pages %}
+          {% if article.article_section == "engineering" %}
+            <li>
+              <a
+                class="article-nav__link{% if page.url == article.url %} article-nav__link--current{% endif %}"
+                href="{{ article.url | relative_url }}"
+                {% if page.url == article.url %}aria-current="page"{% endif %}
+              >{{ article.nav_title | escape }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="article-nav__group">
+      <p class="article-nav__label">产品与行业</p>
+      <ul class="article-nav__list">
+        {% for article in article_pages %}
+          {% if article.article_section == "product" %}
+            <li>
+              <a
+                class="article-nav__link{% if page.url == article.url %} article-nav__link--current{% endif %}"
+                href="{{ article.url | relative_url }}"
+                {% if page.url == article.url %}aria-current="page"{% endif %}
+              >{{ article.nav_title | escape }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    </div>
+  </nav>
+</aside>

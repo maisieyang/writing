@@ -1,7 +1,13 @@
-# 我实现了 `/goal`，但人还是不能离开
-
-*Goal 能让任务持续推进，却不足以让人离场：Permission、Sandbox 如何共同补齐长程任务的控制边界。*
-
+---
+layout: page
+title: "我实现了 /goal，但人还是不能离开"
+article_nav: true
+article_section: engineering
+article_order: 10
+nav_title: "/goal：让人真正离场"
+article_date: 2026-08-16
+article_summary: "Goal 能让任务持续推进，却不足以让人离场：Permission、Sandbox 如何共同补齐长程任务的控制边界。"
+---
 
 ## 为什么我要实现 `/goal`
 

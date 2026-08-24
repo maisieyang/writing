@@ -2,8 +2,36 @@
 layout: default
 ---
 
-<article class="post">
-  <div class="post-content">
-    {{ content }}
-  </div>
-</article>
+<div class="article-shell">
+  {% include article-nav.html %}
+
+  <article class="post">
+    <header class="article-header">
+      <p class="article-meta">
+        <span>
+          {% if page.article_section == "engineering" %}
+            工程实践
+          {% elsif page.article_section == "product" %}
+            产品与行业
+          {% endif %}
+        </span>
+        {% if page.article_date %}
+          <span aria-hidden="true">·</span>
+          <time datetime="{{ page.article_date | date: "%Y-%m-%d" }}">
+            {{ page.article_date | date: "%Y-%m-%d" }}
+          </time>
+        {% endif %}
+      </p>
+
+      <h1 class="article-title">{{ page.title | escape }}</h1>
+
+      {% if page.article_summary %}
+        <p class="article-summary">{{ page.article_summary | escape }}</p>
+      {% endif %}
+    </header>
+
+    <div class="post-content">
+      {{ content }}
+    </div>
+  </article>
+</div>

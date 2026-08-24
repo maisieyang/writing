@@ -1,6 +1,13 @@
-# Content Management：如何为 Coding Agent 管理有限注意力
-
-> 写于 2026-08-13
+---
+layout: page
+title: "Content Management：如何为 Coding Agent 管理有限注意力"
+article_nav: true
+article_section: engineering
+article_order: 20
+nav_title: "Content Management"
+article_date: 2026-08-13
+article_summary: "Harness 如何在有限 Context 中持续编译模型下一次推理所需的 Working Set。"
+---
 
 Coding Agent 的任务可以持续几十轮、几小时甚至更久，但 LLM 每一次推理只能接收一份有限输入。
 Harness 因此必须不断决定：当前任务需要哪些信息，哪些证据仍然有效，模型此刻可以使用什么

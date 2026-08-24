@@ -1,4 +1,13 @@
-# 拆解 Anthropic 的产品逻辑
+---
+layout: page
+title: "拆解 Anthropic 的产品逻辑"
+article_nav: true
+article_section: product
+article_order: 50
+nav_title: "Anthropic 的产品逻辑"
+article_date: 2026-07-05
+article_summary: "从 Claude Code 的演化、统一 Harness、MCP、Plugin 和 Skill 出发，理解 Anthropic 如何把持续变强的模型接入高价值工作流。"
+---
 
 ## 1. 先看历史：Claude Code 是长出来的，不是规划出来的
 

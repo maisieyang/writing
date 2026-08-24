@@ -1,6 +1,13 @@
-# 一个 Coding Agent，到底应该怎么验证？
-
-*我在 OpenHarness 中如何用 TDD、Eval 和 Dogfood 构成开发闭环，再用公共 Benchmark 补充一份有限的端到端证据。*
+---
+layout: page
+title: "一个 Coding Agent，到底应该怎么验证？"
+article_nav: true
+article_section: engineering
+article_order: 30
+nav_title: "Coding Agent 如何验证"
+article_date: 2026-08-18
+article_summary: "我在 OpenHarness 中如何用 TDD、Eval 和 Dogfood 构成开发闭环，再用公共 Benchmark 补充一份有限的端到端证据。"
+---
 
 有很长一段时间，我不知道该怎么写 [OpenHarness](https://github.com/maisieyang/open-harness) 的 Eval。
 

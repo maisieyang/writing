@@ -1,7 +1,13 @@
-# 瓶颈在哪，交互重心就在哪
-
-*我深度使用 Claude Code 和 Codex，也在自己的 Harness 里实现了 Goal。这些经历让我看见同一件事：当 Agent 可以连续工作，人的职责会从逐轮推动执行，上移到定义目标、分配注意力和验收结果；coding 工具的交互重心也随之改变。Codex 的价值不在于用 GUI 取代 CLI，而在于它恰好接住了 Agent 能力提升之后，人的注意力成为新瓶颈的时刻。*
-
+---
+layout: page
+title: "瓶颈在哪，交互重心就在哪"
+article_nav: true
+article_section: product
+article_order: 40
+nav_title: "瓶颈在哪，交互重心就在哪"
+article_date: 2026-07-31
+article_summary: "当 Agent 可以连续工作，人的职责会从逐轮推动执行，上移到定义目标、分配注意力和验收结果。"
+---
 
 ## 我为什么开始厌倦逐轮接棒
 

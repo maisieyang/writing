@@ -199,6 +199,135 @@ a:hover {
   font-weight: 600;
 }
 
+.article-header {
+  margin-bottom: 46px;
+}
+
+.article-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  color: $site-muted-color;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.article-title {
+  margin: 0;
+  font-size: 38px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.28;
+}
+
+.article-summary {
+  max-width: 42em;
+  margin: 16px 0 0;
+  color: $site-muted-color;
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.post-content {
+  font-size: 17px;
+  line-height: 1.72;
+}
+
+.post-content h2 {
+  margin-top: 52px;
+  margin-bottom: 18px;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+}
+
+.post-content h3 {
+  margin-top: 36px;
+  margin-bottom: 14px;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.post-content h4 {
+  margin-top: 28px;
+  margin-bottom: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.post-content > :first-child {
+  margin-top: 0;
+}
+
+.article-nav {
+  display: none;
+}
+
+.article-nav__title {
+  margin: 0 0 20px;
+  color: $text-color;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.article-nav__group + .article-nav__group {
+  margin-top: 24px;
+}
+
+.article-nav__label {
+  margin: 0 0 7px;
+  color: $site-muted-color;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.article-nav__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.article-nav__list li + li {
+  margin-top: 3px;
+}
+
+.article-nav__link,
+.article-nav__link:visited {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 8px 8px 8px 12px;
+  border-left: 2px solid transparent;
+  color: #515860;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.article-nav__link:hover {
+  border-left-color: #cbdced;
+  color: $site-link-hover-color;
+  text-decoration: none;
+}
+
+.article-nav__link:focus-visible {
+  outline: 2px solid $site-link-color;
+  outline-offset: 2px;
+}
+
+.article-nav__link--current,
+.article-nav__link--current:visited {
+  border-left-color: $site-link-color;
+  color: $site-link-hover-color;
+  font-weight: 600;
+}
+
 .github-project-link {
   display: inline-flex;
   align-items: center;
@@ -218,6 +347,30 @@ a:hover {
   width: 18px;
   height: 18px;
   fill: currentColor;
+}
+
+@media screen and (min-width: 1280px) {
+  .article-shell {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 740px);
+    gap: 36px;
+    width: 986px;
+    margin-left: -246px;
+  }
+
+  .article-nav {
+    display: block;
+    position: sticky;
+    top: 88px;
+    align-self: start;
+    max-height: calc(100vh - 112px);
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+
+  .article-shell .post {
+    min-width: 0;
+  }
 }
 
 @media screen and (max-width: 600px) {
