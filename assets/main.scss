@@ -25,6 +25,10 @@ a:hover {
   min-height: 55px;
 }
 
+.site-header__inner::after {
+  content: none;
+}
+
 .site-title,
 .site-title:visited {
   display: inline-flex;
@@ -399,23 +403,14 @@ a:hover {
     gap: 16px;
   }
 
-  .site-title {
+  .site-title,
+  .site-title:visited {
     font-size: 20px;
   }
 
   .site-description {
     margin-top: 4px;
     margin-bottom: 10px;
-  }
-
-  .site-nav {
-    position: static;
-    top: auto;
-    right: auto;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    text-align: right;
   }
 
   .prose {
@@ -448,6 +443,31 @@ a:hover {
 
   .home > h3 {
     margin-top: 30px;
+    font-size: 19px;
+  }
+
+  .article-header {
+    margin-bottom: 38px;
+  }
+
+  .article-title {
+    font-size: 30px;
+    line-height: 1.32;
+  }
+
+  .article-summary {
+    font-size: 17px;
+    line-height: 1.65;
+  }
+
+  .post-content h2 {
+    margin-top: 44px;
+    font-size: 23px;
+    line-height: 1.4;
+  }
+
+  .post-content h3 {
+    margin-top: 32px;
     font-size: 19px;
   }
 

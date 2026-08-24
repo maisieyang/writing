@@ -62,9 +62,9 @@ Tool Catalog，限制 Tool Result 增长，清理和压缩历史，并通过 Pro
 我将验证拆成确定性的机制测试、模型参与的 Capability Eval、完整产品 Dogfood
 和公共 Benchmark；并为 Eval 建立 Live、Record、Replay 与明确的证据有效边界。
 
-## 产品与行业
+## 产品思考
 
-这些文章把 OpenHarness 中遇到的问题放回更广泛的产品与行业变化中观察。
+这些文章把 OpenHarness 中遇到的问题放回更广泛的产品变化与行业趋势中思考。
 
 ### [瓶颈在哪，交互重心就在哪](./coding-tools-evolution.md)
 
