@@ -13,10 +13,14 @@
   <p class="project-focus">
     我的核心工作集中在 Agent Runtime，包括 Content Management、
     Default / Plan / Goal、Agent Interaction，以及 Eval。
+    这些工作分别回答模型当前应该看见什么、在不同模式下可以采取什么行动、
+    任务何时继续或停止、人何时需要介入，以及如何验证结果。
   </p>
 
   <div class="project-proof" aria-label="OpenHarness 验证数据">
-    <p class="project-proof__date">截至 2026-08-22</p>
+    <p class="project-proof__date">
+      OpenHarness 的测试、Eval 与 Benchmark 验证数据，截至 2026-08-22
+    </p>
     <ul>
       <li><strong>2,791</strong> 个稳定测试</li>
       <li><strong>95.06%</strong> stable-core coverage</li>
