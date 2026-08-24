@@ -2,9 +2,18 @@
   <data class="u-url" href="{{ "/" | relative_url }}"></data>
 
   <div class="wrapper">
-    <h2 class="footer-heading">{{ site.title | escape }}</h2>
-    {% if site.description %}
-      <p class="footer-description">{{ site.description | escape }}</p>
-    {% endif %}
+    <div class="footer-cta">
+      <p class="footer-cta__copy">
+        如果你们正在构建面向真实用户的 Agent 产品，欢迎通过
+        <a class="u-email" href="mailto:maisieyang@outlook.com">maisieyang@outlook.com</a>
+        联系我。
+      </p>
+
+      <nav class="footer-links" aria-label="社交链接">
+        <a href="https://github.com/maisieyang">GitHub</a>
+        <span aria-hidden="true">·</span>
+        <a href="https://x.com/maisieyangyang">X</a>
+      </nav>
+    </div>
   </div>
 </footer>

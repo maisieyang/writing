@@ -8,12 +8,10 @@
       <p class="site-description">{{ site.description | escape }}</p>
     {% endif %}
 
-    <nav class="site-nav" aria-label="主导航">
-      <a
-        class="page-link"
-        href="{{ "/" | relative_url }}"
-        {% if page.url == "/" %}aria-current="page"{% endif %}
-      >首页</a>
-    </nav>
+    {% unless page.url == "/" %}
+      <nav class="site-nav" aria-label="主导航">
+        <a class="page-link" href="{{ "/" | relative_url }}">首页</a>
+      </nav>
+    {% endunless %}
   </div>
 </header>

@@ -3,6 +3,20 @@
 
 @import "minima";
 
+$site-link-color: #1f66ad;
+$site-link-hover-color: #174c82;
+$site-muted-color: #5f6368;
+$site-border-color: #e3e7eb;
+
+a,
+a:visited {
+  color: $site-link-color;
+}
+
+a:hover {
+  color: $site-link-hover-color;
+}
+
 .site-header__inner {
   display: flex;
   align-items: center;
@@ -12,7 +26,10 @@
 }
 
 .site-title {
+  display: inline-flex;
+  align-items: center;
   float: none;
+  min-height: 44px;
   padding: 0;
   line-height: 1.35;
 }
@@ -36,23 +53,150 @@
 }
 
 .site-nav .page-link {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  box-sizing: border-box;
   margin: 0 !important;
-  padding: 8px 0 8px 16px;
+  padding: 10px 0 10px 16px;
+  color: $site-muted-color;
   line-height: 1.35;
 }
 
-.site-nav .page-link[aria-current="page"] {
-  color: $grey-color;
+.site-nav .page-link:hover {
+  color: $site-link-hover-color;
 }
 
-.footer-description {
-  margin-bottom: 0;
-  color: $grey-color;
+.site-footer {
+  margin-top: 32px;
+  padding: 24px 0 40px;
+  border-color: $site-border-color;
+}
+
+.footer-cta {
+  max-width: 740px;
+}
+
+.footer-cta__copy {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+.footer-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.footer-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 8px;
+}
+
+.footer-links a:first-child {
+  margin-left: -8px;
+}
+
+.footer-links span {
+  color: $site-muted-color;
+}
+
+.home {
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+.home-intro {
+  margin-bottom: 54px;
 }
 
 .project-intro {
-  margin-bottom: 15px;
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.project-summary {
+  font-weight: 500;
+}
+
+.project-focus {
+  color: #2f3337;
+}
+
+.project-proof {
+  margin: 24px 0;
+  padding: 15px 0 14px;
+  border-top: 1px solid $site-border-color;
+  border-bottom: 1px solid $site-border-color;
+}
+
+.project-proof__date {
+  margin: 0 0 9px;
+  color: $site-muted-color;
+  font-size: 14px;
+}
+
+.project-proof ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.project-proof li {
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.job-search {
+  margin-top: 26px;
+  padding: 12px 0 12px 18px;
+  border-left: 3px solid #cbdced;
+  color: #30353a;
+}
+
+.home > h2 {
+  margin-top: 56px;
+  margin-bottom: 18px;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.home-intro + h2 {
+  margin-top: 0;
+}
+
+.home > h2 + p {
+  margin-bottom: 26px;
+  color: $site-muted-color;
+}
+
+.home > h3 {
+  margin-top: 34px;
+  margin-bottom: 10px;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.home > h3 a {
+  display: inline-block;
+  padding: 4px 0;
+}
+
+.home > h3 + p {
+  margin-bottom: 13px;
+}
+
+.home > h3 + p strong {
+  font-weight: 600;
 }
 
 .github-project-link {
@@ -60,24 +204,20 @@
   align-items: center;
   gap: 5px;
   margin-left: 3px;
-  color: $text-color;
+  color: $site-link-color;
   font-weight: 600;
   white-space: nowrap;
   vertical-align: -0.12em;
 }
 
 .github-project-link:hover {
-  color: $brand-color;
+  color: $site-link-hover-color;
 }
 
 .github-project-link .svg-icon {
   width: 18px;
   height: 18px;
   fill: currentColor;
-}
-
-.home > h2:first-of-type {
-  margin-top: 42px;
 }
 
 @media screen and (max-width: 600px) {
@@ -102,5 +242,47 @@
     border-radius: 0;
     background: transparent;
     text-align: right;
+  }
+
+  .home {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .home-intro {
+    margin-bottom: 44px;
+  }
+
+  .project-intro {
+    font-size: 17px;
+    line-height: 1.65;
+  }
+
+  .project-proof ul {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .job-search {
+    padding-left: 14px;
+  }
+
+  .home > h2 {
+    margin-top: 48px;
+    font-size: 24px;
+  }
+
+  .home > h3 {
+    margin-top: 30px;
+    font-size: 19px;
+  }
+
+  .site-footer {
+    margin-top: 24px;
+    padding-top: 20px;
+  }
+
+  .footer-cta__copy {
+    font-size: 16px;
   }
 }
